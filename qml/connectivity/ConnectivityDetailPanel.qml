@@ -107,6 +107,7 @@ Item {
             height: 24
 
             Text {
+                renderType: Text.NativeRendering
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.isWifi ? "Wi-Fi" : "Bluetooth"
                 color: StyleTokens.textPrimary
@@ -148,6 +149,7 @@ Item {
                     anchors.margins: 14
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         text: root.provider ? root.provider.wifiGlyph : ""
@@ -157,6 +159,7 @@ Item {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.leftMargin: 28
                         anchors.top: parent.top
@@ -171,6 +174,7 @@ Item {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.leftMargin: 28
                         anchors.bottom: parent.bottom
@@ -181,6 +185,7 @@ Item {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         text: "✓"
@@ -193,6 +198,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 width: parent.width
                 visible: root.provider && root.provider.wifiAvailabilityMessage.length > 0 && root.isWifi
                 text: root.provider ? root.provider.wifiAvailabilityMessage : ""
@@ -203,6 +209,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 width: parent.width
                 visible: root.provider && root.provider.wifiInfoMessage.length > 0 && root.isWifi
                 text: root.provider ? root.provider.wifiInfoMessage : ""
@@ -213,6 +220,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 width: parent.width
                 visible: root.provider && root.provider.wifiError.length > 0 && root.isWifi
                 text: root.provider ? root.provider.wifiError : ""
@@ -223,6 +231,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 width: parent.width
                 visible: root.provider && root.provider.bluetoothAvailabilityMessage.length > 0 && root.isBluetooth
                 text: root.provider ? root.provider.bluetoothAvailabilityMessage : ""
@@ -233,6 +242,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 width: parent.width
                 visible: root.provider && root.provider.bluetoothInfoMessage.length > 0 && root.isBluetooth
                 text: root.provider ? root.provider.bluetoothInfoMessage : ""
@@ -243,6 +253,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 width: parent.width
                 visible: root.provider && root.provider.bluetoothError.length > 0 && root.isBluetooth
                 text: root.provider ? root.provider.bluetoothError : ""
@@ -281,6 +292,7 @@ Item {
                         spacing: 10
 
                         Text {
+                            renderType: Text.NativeRendering
                             width: parent.width
                             text: root.provider ? root.provider.bluetoothPairingTitle : ""
                             color: StyleTokens.textPrimary
@@ -291,6 +303,7 @@ Item {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             width: parent.width
                             text: root.provider ? root.provider.bluetoothPairingMessage : ""
                             color: "#d2d4da"
@@ -322,6 +335,7 @@ Item {
                             visible: root.provider && root.provider.bluetoothPairingRequiresInput
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.left: parent.left
                                 anchors.leftMargin: 12
                                 anchors.verticalCenter: parent.verticalCenter
@@ -377,6 +391,7 @@ Item {
                             color: StyleTokens.accent
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.centerIn: parent
                                 text: root.provider && root.provider.bluetoothPairingRequiresConfirmation
                                     ? "Confirm"
@@ -409,6 +424,7 @@ Item {
                             color: StyleTokens.secondaryButton
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.centerIn: parent
                                 text: "Cancel"
                                 color: StyleTokens.textPrimary
@@ -448,6 +464,7 @@ Item {
                     anchors.margins: 12
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.right: parent.right
@@ -471,6 +488,7 @@ Item {
                         border.width: 1
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.leftMargin: 12
                             anchors.verticalCenter: parent.verticalCenter
@@ -524,6 +542,7 @@ Item {
                         color: StyleTokens.accent
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: "Join"
                             color: StyleTokens.white
@@ -551,6 +570,7 @@ Item {
                         color: StyleTokens.secondaryButton
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: "Cancel"
                             color: StyleTokens.textPrimary
@@ -588,6 +608,7 @@ Item {
                 spacing: 8
 
                 Text {
+                    renderType: Text.NativeRendering
                     width: parent.width
                     visible: root.isWifi && root.provider
                         && root.provider.wifiSupported
@@ -601,6 +622,7 @@ Item {
                 }
 
                 Text {
+                    renderType: Text.NativeRendering
                     width: parent.width
                     visible: root.isWifi && root.provider && root.provider.wifiListRunning
                     text: "Scanning nearby networks..."
@@ -644,6 +666,7 @@ Item {
                             anchors.margins: 12
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: root.provider ? root.provider.wifiGlyph : ""
@@ -653,6 +676,7 @@ Item {
                             }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.left: parent.left
                                 anchors.leftMargin: 26
                                 anchors.top: parent.top
@@ -667,6 +691,7 @@ Item {
                             }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.left: parent.left
                                 anchors.leftMargin: 26
                                 anchors.bottom: parent.bottom
@@ -686,6 +711,7 @@ Item {
                                 spacing: 6
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     text: signal + "%"
                                     color: "#f0f0f3"
                                     font.pixelSize: 11
@@ -694,6 +720,7 @@ Item {
                                 }
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     text: ""
                                     color: StyleTokens.textSubtle
                                     font.pixelSize: 11
@@ -706,6 +733,7 @@ Item {
                 }
 
                 Text {
+                    renderType: Text.NativeRendering
                     width: parent.width
                     visible: root.isBluetooth && root.provider && root.provider.bluetoothAvailable && !root.provider.bluetoothEnabled
                     text: "Turn on Bluetooth to see nearby devices."
@@ -716,6 +744,7 @@ Item {
                 }
 
                 Text {
+                    renderType: Text.NativeRendering
                     width: parent.width
                     visible: root.isBluetooth && root.provider
                         && root.provider.bluetoothEnabled

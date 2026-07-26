@@ -65,6 +65,7 @@ Item {
                 height: cellH
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.centerIn: parent
                     text: lbl.wsNum
                     font.pixelSize: Math.max(10, Math.min(lbl.cellW, lbl.cellH) * 0.18)
@@ -150,6 +151,7 @@ Item {
             z: 9999
 
             Text {
+                renderType: Text.NativeRendering
                 id: tipText
                 anchors.centerIn: parent
                 text: interactionLayer.tooltipText

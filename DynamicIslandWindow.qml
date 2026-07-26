@@ -37,20 +37,45 @@ PanelWindow {
     readonly property int currentMonitorWorkspaceId: hyprMonitor && hyprMonitor.activeWorkspace
         ? hyprMonitor.activeWorkspace.id
         : 1
-    readonly property bool screenRecordingActive: shellRootController
-        && shellRootController.screenRecordingActive !== undefined
-        ? !!shellRootController.screenRecordingActive
-        : false
+readonly property bool screenRecordingActive: shellRootController
+    && shellRootController.screenRecordingActive !== undefined
+    ? !!shellRootController.screenRecordingActive || gpuRecorderActive
+    : gpuRecorderActive
+
+property bool gpuRecorderActive: false
+
+Process {
+    id: gpuRecorderPoll
+    property string _buf: ""
+  command: ["bash", "-c", "lsof -c gpu-screen-rec 2>/dev/null | grep -qE '\\.mp4|\\.mkv|\\.flv' && echo 1 || echo 0"]
+    stdout: SplitParser { onRead: gpuRecorderPoll._buf += data }
+    onRunningChanged: {
+        if (!running) {
+            root.gpuRecorderActive = gpuRecorderPoll._buf.trim() === "1"
+            gpuRecorderPoll._buf = ""
+        }
+    }
+}
+
+Timer {
+    interval: 3000
+    running: true
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: if (!gpuRecorderPoll.running) gpuRecorderPoll.running = true
+}
 
  readonly property var userConfig: UserConfig
 property bool gamemodeActive: false
 property bool pinned: false
-    property bool sidebarEnabled: false
+property bool sidebarEnabled: false
+    property bool bubblesEnabled: true
     property real capsuleOpacity: 0.20
 property bool capsuleUseWalColor: false
     property var capsuleWalColors: []
     property int capsuleWalColorIndex: 0
-    property bool lyricsExpandedView: false
+property bool lyricsExpandedView: false
+    property bool idleMode: false
 readonly property color capsuleWalColor: (capsuleWalColorIndex >= 0 && capsuleWalColorIndex < capsuleWalColors.length)
         ? capsuleWalColors[capsuleWalColorIndex]
         : "#000000"
@@ -61,7 +86,9 @@ onCapsuleOpacityChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTim
     onCapsuleUseWalColorChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTimer.restart()
     onCapsuleWalColorIndexChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTimer.restart()
 onLyricsExpandedViewChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTimer.restart()
-    onSidebarEnabledChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTimer.restart()
+onSidebarEnabledChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTimer.restart()
+onBubblesEnabledChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTimer.restart()
+    onIdleModeChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTimer.restart()
     HyprlandDispatch {
         id: hyprDispatch
     }
@@ -91,14 +118,30 @@ IpcHandler {
             height: Math.ceil(root.topGestureInputHeight)
         }
 
-        Region {
+Region {
             intersection: Intersection.Combine
             x: Math.floor(mainCapsule.x)
             y: Math.floor(mainCapsule.y)
-            width: Math.ceil(mainCapsule.width)
-            height: Math.ceil(mainCapsule.height)
+            width: root.idleMode ? 0 : Math.ceil(mainCapsule.width)
+            height: root.idleMode ? 0 : Math.ceil(mainCapsule.height)
         }
-        
+
+Region {
+            intersection: Intersection.Combine
+            x: Math.floor(workspaceBubble.x)
+            y: Math.floor(workspaceBubble.y)
+            width: root.bubblesEnabled ? Math.ceil(workspaceBubble.width) : 0
+            height: root.bubblesEnabled ? Math.ceil(workspaceBubble.height) : 0
+        }
+
+        Region {
+            intersection: Intersection.Combine
+            x: Math.floor(systrayBubble.x)
+            y: Math.floor(systrayBubble.y)
+            width: root.bubblesEnabled ? Math.ceil(systrayBubble.width) : 0
+            height: root.bubblesEnabled ? Math.ceil(systrayBubble.height) : 0
+        }
+
         // Add existing detail shells
         Region {
             intersection: Intersection.Combine
@@ -133,10 +176,10 @@ implicitHeight: Math.max(
         Math.ceil(4 + root.connectivityDetailHeight + 12),
         Math.ceil(root.controlCenterWindowHeight)
     )
-exclusiveZone: root.gamemodeActive ? 60 : 35
+exclusiveZone: root.idleMode ? 0 : (root.gamemodeActive ? 60 : 35)
     aboveWindows: true
 focusable: root.overviewVisible || root.connectivityPromptActive || islandContainer.islandState === "info" || islandContainer.islandState === "search" || islandContainer.islandState === "control_center"
-WlrLayershell.layer: root.pinned ? WlrLayer.Overlay : WlrLayer.Top
+WlrLayershell.layer: root.idleMode ? WlrLayer.Background : (root.pinned ? WlrLayer.Overlay : WlrLayer.Top)
 WlrLayershell.keyboardFocus: (root.overviewVisible || islandContainer.islandState === "search")
         ? WlrKeyboardFocus.Exclusive
         : ((root.connectivityPromptActive || islandContainer.islandState === "info" || islandContainer.islandState === "control_center")
@@ -187,7 +230,7 @@ readonly property real controlCenterWindowHeight: {
         if (!islandContainer.controlCenterLayerVisible && !islandContainer.lyricsControlCenterLayerVisible)
             return 0
 if (controlCenterLoader.item && controlCenterLoader.item.powerMenuOpen)
-            return 4 + controlCenterLoader.item.powerMenuTotalHeight + 12
+            return 4 + controlCenterLoader.item.notificationPanelTotalHeight + 12
         if (controlCenterLoader.item && controlCenterLoader.item.notificationPanelOpen)
             return 4 + controlCenterLoader.item.notificationPanelTotalHeight + 12
         if (controlCenterLoader.item && controlCenterLoader.item.appearanceMenuOpen)
@@ -568,8 +611,12 @@ if (typeof parsed.capsuleWalColorIndex === "number")
                             root.capsuleWalColorIndex = parsed.capsuleWalColorIndex
 if (typeof parsed.lyricsExpandedView === "boolean")
                             root.lyricsExpandedView = parsed.lyricsExpandedView
-                        if (typeof parsed.sidebarEnabled === "boolean")
+if (typeof parsed.sidebarEnabled === "boolean")
                             root.sidebarEnabled = parsed.sidebarEnabled
+if (typeof parsed.bubblesEnabled === "boolean")
+                            root.bubblesEnabled = parsed.bubblesEnabled
+                        if (typeof parsed.idleMode === "boolean")
+                            root.idleMode = parsed.idleMode
                     } catch (e) {
                         console.log("appearance-settings.json: failed to parse,",
                             "using defaults —", e)
@@ -595,8 +642,10 @@ JSON.stringify({
                 capsuleOpacity: root.capsuleOpacity,
                 capsuleUseWalColor: root.capsuleUseWalColor,
                 capsuleWalColorIndex: root.capsuleWalColorIndex,
-                lyricsExpandedView: root.lyricsExpandedView,
-                sidebarEnabled: root.sidebarEnabled
+lyricsExpandedView: root.lyricsExpandedView,
+                sidebarEnabled: root.sidebarEnabled,
+                bubblesEnabled: root.bubblesEnabled,
+                idleMode: root.idleMode
             }) +
             "' > \"$HOME/.cache/quickshell/appearance-settings.json\""]
     }
@@ -684,15 +733,6 @@ property int mediaWorkspaceId: -1
             || islandState === "custom"
             || islandState === "lyrics"
 readonly property bool dndBubbleVisible: dndActive && dndBubbleEligibleState && !root.overviewVisible
-property int bubbleActivationCounter: 0
-        property int dndBubbleActivationOrder: 0
-
-        onDndBubbleVisibleChanged: {
-            if (dndBubbleVisible) {
-                bubbleActivationCounter += 1;
-                dndBubbleActivationOrder = bubbleActivationCounter;
-            }
-        }
         readonly property var cavaLevels: systemState.cavaLevels
         property real swipeTransitionProgress: 0
         property string workspaceOriginSide: "none"
@@ -1707,8 +1747,8 @@ case "capturing":
                         notificationLoader.item.minimumWidth,
                         Math.min(notificationLoader.item.maximumWidth, notificationLoader.item.preferredWidth)
                     );
-                default:
-                    return 140 + (lyricsSwipeLoader.item ? lyricsSwipeLoader.item.trayTotalWidth : 0);
+default:
+                    return 140;
                 }
             }
             readonly property real targetHeight: {
@@ -1724,7 +1764,7 @@ case "capturing":
                     return searchLoader.item ? searchLoader.item.capsuleHeight : 38;
 case "control_center":
                     if (controlCenterLoader.item && controlCenterLoader.item.powerMenuOpen)
-                        return controlCenterLoader.item.powerMenuTotalHeight
+                        return controlCenterLoader.item.notificationPanelTotalHeight
                     if (controlCenterLoader.item && controlCenterLoader.item.notificationPanelOpen)
                         return controlCenterLoader.item.notificationPanelTotalHeight
                     if (controlCenterLoader.item && controlCenterLoader.item.appearanceMenuOpen)
@@ -1788,6 +1828,8 @@ case "capturing":
             readonly property real sideSwipePreviewWidth: mainCapsule.sideSwipeWidthForProgress(
                 islandContainer.swipeTransitionProgress
             )
+opacity: 1
+visible: !root.idleMode
 color: root.overviewContentVisible
     ? root.overviewCapsuleColor
     : (root.gamemodeActive
@@ -2129,7 +2171,7 @@ sourceComponent: Component {
 
                 sourceComponent: Component {
                     SwipeLyricsLayer {
-                    showTray: islandContainer.islandState === "normal" || islandContainer.islandState === "lyrics"
+showTray: false
                         lyricText: islandContainer.lyricsDisplayText
                         timeText: timeObj.currentTime
                         textFontFamily: root.textFontFamily
@@ -2432,8 +2474,10 @@ onAppearanceWalColorIndexRequested: function(index) { root.capsuleWalColorIndex 
                         onGamemodeToggleRequested: root.toggleGamemode()
 pinned: root.pinned
                         onPinToggleRequested: root.pinned = !root.pinned
-                        sidebarEnabled: root.sidebarEnabled
-                        onSidebarToggleRequested: root.sidebarEnabled = !root.sidebarEnabled
+bubblesEnabled: root.bubblesEnabled
+                        onBubblesToggleRequested: root.bubblesEnabled = !root.bubblesEnabled
+idleMode: root.idleMode
+                        onIdleModeToggleRequested: function(enabled) { root.idleMode = enabled }
                         showCondition: islandContainer.controlCenterLayerVisible
                         onConnectivityPanelRequested: function(kind, open) {
                             root.setConnectivityDetailVisible(kind, open)
@@ -2532,15 +2576,50 @@ sourceComponent: Component {
 
 }
 
-        // ── DND indicator bubble — detached, follows mainCapsule's right
-        // edge. Only shown on resting/idle states; hidden the instant any
-        // expanded panel opens. Non-interactive, so no mask entry needed —
-        // it simply sits outside the input region and clicks pass through
-        // to the desktop behind it, which is the desired behavior here.
+// ── Left satellite: workspace bubble ───────────────────────────────
+WorkspaceBubble {
+            id: workspaceBubble
+            x: 16
+            monitorName: root.hyprMonitorName
+            currentWorkspace: islandContainer.currentWs
+            textFontFamily: root.heroFontFamily
+            useWalColor: root.capsuleUseWalColor
+            walColor: root.capsuleWalColor
+            capsuleOpacityValue: root.capsuleOpacity
+            gamemodeActive: root.gamemodeActive
+            opacity: (root.bubblesEnabled && !root.idleMode) ? 1 : 0
+            visible: opacity > 0.01
+            Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.InOutQuad } }
+            onDotClicked: function(workspaceId) { hyprDispatch.focusWorkspace(workspaceId) }
+        }
+
+        // ── Right satellite: systray bubble ────────────────────────────────
+SystrayBubble {
+            id: systrayBubble
+            x: root.width - width - 16
+            useWalColor: root.capsuleUseWalColor
+            walColor: root.capsuleWalColor
+            capsuleOpacityValue: root.capsuleOpacity
+            gamemodeActive: root.gamemodeActive
+            iconFontFamily: root.iconFontFamily
+            textFontFamily: root.textFontFamily
+            dndActive: islandContainer.dndActive
+            onDndToggleRequested: islandContainer.toggleDnd()
+            opacity: (root.bubblesEnabled && !root.idleMode) ? 1 : 0
+            visible: opacity > 0.01
+            Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.InOutQuad } }
+        }
+
+// ── DND indicator bubble — detached, follows mainCapsule's right
+        // edge. Only shown when the satellite bubbles are hidden and on
+        // resting/idle states; hidden the instant any expanded panel opens.
+        // Non-interactive, so no mask entry needed — it simply sits outside
+        // the input region and clicks pass through to the desktop behind it.
 Item {
             id: dndBubble
-            property bool mounted: islandContainer.dndBubbleVisible
-            property real reveal: islandContainer.dndBubbleVisible ? 1 : 0
+            readonly property bool shouldShow: !root.bubblesEnabled && islandContainer.dndBubbleVisible
+            property bool mounted: false
+            property real reveal: 0
 readonly property int bubbleSize: 26
             readonly property real stackOffset: 0
             readonly property real hiddenX: mainCapsule.x + mainCapsule.width - width * 0.62
@@ -2557,17 +2636,31 @@ readonly property int bubbleSize: 26
             scale: 0.55 + reveal * 0.45
             transformOrigin: Item.Center
 
-            Connections {
-                target: islandContainer
-                function onDndBubbleVisibleChanged() {
+            onShouldShowChanged: {
+                if (shouldShow) {
+                    // Only start revealing once the capsule has actually
+                    // settled on a resting state for a moment — avoids a
+                    // flash/fade when we're only briefly passing through
+                    // an eligible state on the way to an expanded panel.
+                    dndBubbleShowDelayTimer.restart();
+                } else {
+                    dndBubbleShowDelayTimer.stop();
                     dndBubbleShowAnimation.stop();
                     dndBubbleHideAnimation.stop();
-                    if (islandContainer.dndBubbleVisible) {
-                        dndBubble.mounted = true;
-                        dndBubbleShowAnimation.restart();
-                    } else {
+                    if (dndBubble.mounted)
                         dndBubbleHideAnimation.restart();
-                    }
+                }
+            }
+
+            Timer {
+                id: dndBubbleShowDelayTimer
+                interval: 260
+                repeat: false
+                onTriggered: {
+                    if (!dndBubble.shouldShow) return;
+                    dndBubble.mounted = true;
+                    dndBubbleHideAnimation.stop();
+                    dndBubbleShowAnimation.restart();
                 }
             }
 
@@ -2584,7 +2677,7 @@ readonly property int bubbleSize: 26
                 from: dndBubble.reveal; to: 0
                 duration: 280; easing.type: Easing.InCubic
                 onStopped: {
-                    if (!islandContainer.dndBubbleVisible && dndBubble.reveal <= 0.001)
+                    if (!dndBubble.shouldShow && dndBubble.reveal <= 0.001)
                         dndBubble.mounted = false;
                 }
             }
@@ -2603,7 +2696,6 @@ readonly property int bubbleSize: 26
                 color: "white"
             }
         }
-
 
         ConnectivityDetailShell {
             id: wifiConnectivityDetailShell
@@ -2640,6 +2732,7 @@ readonly property int bubbleSize: 26
             textFontFamily: root.textFontFamily
             heroFontFamily: root.heroFontFamily
         }
+        
         
  // ── Screenshot detail panel ────────────────────────────────────────
         Item {
@@ -2769,11 +2862,38 @@ QtObject {
         }
     }
 
-    IslandRootGestureArea {
+IslandRootGestureArea {
         anchors.fill: parent
         enabled: root.topGestureInputActive
         islandController: islandContainer
         capsule: mainCapsule
+    }
+
+    // ── Idle overlay — standalone panel, only visible while idleMode is
+    // on. Declared here (not in shell.qml) so it gets direct access to
+    // this screen's islandContainer state without matching across
+    // separate Variants instances.
+    IdleOverlayWindow {
+        screen: root.screen
+        hyprMonitor: root.hyprMonitor
+        idleMode: root.idleMode
+        onIdleModeToggleRequested: function(enabled) { root.idleMode = enabled }
+
+        timeText: timeObj.currentTime
+        dateText: timeObj.currentDateLabel
+
+currentWorkspace: islandContainer.currentWs
+        onWorkspaceDotClicked: function(id) { hyprDispatch.focusWorkspace(id) }
+
+        notificationHistory: islandContainer.notificationHistory
+
+        lyricManager: islandContainer.lyricManagerInstance
+        inlineLyricsRaw: islandContainer.mediaController.inlineLyricsRaw
+
+        activePlayer: islandContainer.activePlayer
+        currentTrack: islandContainer.currentTrack
+        currentArtist: islandContainer.currentArtist
+        currentArtUrl: islandContainer.currentArtUrl
     }
 }
 }

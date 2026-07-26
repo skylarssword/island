@@ -28,6 +28,7 @@ Item {
     }
 
     Text {
+        renderType: Text.NativeRendering
         anchors.centerIn: parent
         text: root.iconText
         color: controlArea.pressed ? "#888888" : "#ffffff"

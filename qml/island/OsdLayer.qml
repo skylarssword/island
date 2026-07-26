@@ -59,6 +59,7 @@ Item {
             spacing: 12
 
             Text {
+                renderType: Text.NativeRendering
                 text: iconText
                 color: "white"
                 font.pixelSize: 18
@@ -67,6 +68,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 text: Math.round(progress * 100) + "%"
                 color: "white"
                 font.pixelSize: 20
@@ -141,6 +143,7 @@ Item {
             spacing: 14
 
             Text {
+                renderType: Text.NativeRendering
                 text: iconText
                 color: "white"
                 font.pixelSize: 18
@@ -149,6 +152,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 text: customText
                 color: "white"
                 font.pixelSize: 16

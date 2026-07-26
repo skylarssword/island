@@ -37,6 +37,7 @@ Item {
     }
 
     Text {
+        renderType: Text.NativeRendering
         id: dateLabel
         x: dateX
         anchors.verticalCenter: parent.verticalCenter
@@ -50,6 +51,7 @@ Item {
     }
 
     Text {
+        renderType: Text.NativeRendering
         id: timeLabel
         visible: trailingText !== ""
         x: timeX

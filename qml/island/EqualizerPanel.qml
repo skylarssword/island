@@ -387,6 +387,7 @@ Image {
                                 }
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     id: bandLabelText
                                     width: parent.width
                                     horizontalAlignment: Text.AlignHCenter
@@ -429,6 +430,7 @@ Image {
                             Behavior on color { ColorAnimation { duration: 150 } }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 id: presetText
                                 anchors.centerIn: parent
                                 text: modelData
@@ -458,6 +460,7 @@ Image {
                     Behavior on color { ColorAnimation { duration: 200 } }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: root.pendingChanges ? "Apply" : "Saved"
                         color: root.pendingChanges ? "white" : "#8e8e93"
@@ -627,6 +630,7 @@ Image {
                                 }
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     id: bandLabelText2
                                     width: parent.width
                                     horizontalAlignment: Text.AlignHCenter
@@ -674,6 +678,7 @@ Image {
                             Behavior on color { ColorAnimation { duration: 150 } }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.centerIn: parent
                                 text: String(slotNum)
                                 color: isSelected ? "white" : "#8e8e93"
@@ -706,6 +711,7 @@ Image {
                         Behavior on color { ColorAnimation { duration: 120 } }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: "Reset"
                             color: "#8e8e93"
@@ -732,6 +738,7 @@ Image {
                         Behavior on color { ColorAnimation { duration: 200 } }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: root.customSlotDirty ? "Save" : "Saved"
                             color: root.customSlotDirty ? "white" : "#8e8e93"

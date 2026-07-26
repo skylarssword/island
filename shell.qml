@@ -7,6 +7,12 @@ import IslandBackend
 Scope {
     id: shellRoot
 
+    // ── Global Font Loaders ─────────────────────────────────────────────
+    // Registers the font files into Qt's global font database
+    FontLoader { id: mainFont; source: "file:///home/userone/.local/share/fonts/FlexRounded-R.ttf" }
+    FontLoader { source: "file:///home/userone/.local/share/fonts/FlexRounded-M.ttf" }
+    FontLoader { source: "file:///home/userone/.local/share/fonts/FlexRounded-B.ttf" }
+
     readonly property bool screenRecordingActive: SystemServices.screenRecordingActive
     property bool shuttingDown: false
 
@@ -105,11 +111,16 @@ Scope {
     }
 
     Component.onCompleted: {
+        // Set application-wide default font in Qt engine
+        if (mainFont.name !== "") {
+            Qt.application.font.family = mainFont.name;
+        }
+
         SystemServices.ensureSetupComplete(Quickshell.shellDir);
         SystemServices.requestScreenRecordingSnapshot();
     }
 
-Variants {
+    Variants {
         id: panelVariants
         model: Quickshell.screens
         DynamicIslandWindow {
@@ -118,23 +129,13 @@ Variants {
             shellRootController: shellRoot
         }
     }
-    Variants {
-        id: sidebarVariants
-        model: Quickshell.screens
-        SideIsland {
-            required property var modelData
-            screen: modelData
-        }
-    }
 
     // ── Standalone wallpaper picker ─────────────────────────────────────
     // One instance only, following whichever monitor is currently
-    // focused. Toggled via `qs ipc call wallpaper-picker toggle` — its
-    // IpcHandler lives inside WallpaperPickerWindow.qml itself, so
-    // nothing here needs to touch shellRoot's overview/notification state.
+    // focused. Toggled via `qs ipc call wallpaper-picker toggle`
     WallpaperPickerWindow {
         screen: Hyprland.focusedMonitor
             ? (Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor.name) ?? Quickshell.screens[0])
             : Quickshell.screens[0]
     }
-    }
+}

@@ -278,6 +278,7 @@ Row {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 id: chargingIcon
                 visible: parent.isBattery && modelData.isCharging
                 anchors.left: parent.left
@@ -298,6 +299,7 @@ Row {
                 anchors.verticalCenter: parent.verticalCenter
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.centerIn: parent
                     anchors.verticalCenterOffset: root.iconVerticalOffset
                     visible: parent.parent.hasIcon && !parent.parent.isBattery
@@ -356,6 +358,7 @@ Row {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 visible: !parent.isCava
                 id: valueText
                 anchors.left: parent.isBattery 
@@ -391,6 +394,7 @@ Row {
     }
 
     Text {
+        renderType: Text.NativeRendering
         visible: timeText !== "" && showSecondaryText
         x: timeX
         width: textWidth

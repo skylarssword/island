@@ -65,6 +65,7 @@ Item {
                 height: 58
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.centerIn: parent
                     text: root.iconText
                     color: "#0a84ff"
@@ -138,6 +139,7 @@ Item {
                     spacing: 8
 
                     Text {
+                        renderType: Text.NativeRendering
                         width: Math.max(0, parent.width - batteryText.implicitWidth - parent.spacing)
                         anchors.verticalCenter: parent.verticalCenter
                         text: root.deviceName
@@ -149,6 +151,7 @@ Item {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         id: batteryText
                         anchors.verticalCenter: parent.verticalCenter
                         text: root.batteryAvailable ? root.batteryPercent + "%" : "--"
@@ -160,6 +163,7 @@ Item {
                 }
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
@@ -178,6 +182,7 @@ Item {
             height: 43
 
             Text {
+                renderType: Text.NativeRendering
                 id: volumeLabel
                 anchors.left: parent.left
                 anchors.leftMargin: 12
@@ -190,6 +195,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 id: volumeValue
                 anchors.right: parent.right
                 anchors.rightMargin: 12

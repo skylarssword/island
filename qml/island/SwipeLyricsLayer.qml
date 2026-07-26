@@ -27,7 +27,7 @@ Item {
     readonly property int trayIconSpacing: 5
     readonly property int trayCount: trayRepeater.count
     readonly property real trayTotalWidth: trayCount > 0 ? (trayCount * (trayIconSize + trayIconSpacing)) + 8 : 0
-    readonly property real trayReserved: clampedProgress < 0.1 ? trayTotalWidth : 0
+readonly property real trayReserved: 0
     property real minimumWidth: 220
     property real maximumWidth: minimumWidth
     property real horizontalPadding: 14
@@ -43,11 +43,15 @@ property int recordingDotSpacing: 12
     readonly property bool lyricMostlyVisible: clampedProgress > 0.92
 readonly property real artSize: 26
     readonly property real artSpacing: 8
-    readonly property real artReserved: (currentArtUrl !== "" && lyricMostlyVisible) ? artSize + artSpacing : 0
+readonly property real artReserved: (currentArtUrl !== "" && lyricMostlyVisible) ? artSize + artSpacing : 0
+    // Used for width sizing rather than artReserved directly, since at rest
+    // (the state preferredWidth is computed for) the lyrics are fully visible
+    // anyway — this avoids a circular dependency on the settled width.
+    readonly property real artReservedForWidth: currentArtUrl !== "" ? artSize + artSpacing : 0
 readonly property real cavaReserved: lyricMostlyVisible
-    ? cavaBars.implicitWidth + horizontalPadding * 1 + 7
+    ? cavaBars.implicitWidth + artSpacing
     : 0
-readonly property real textWidth: Math.max(0, width - horizontalPadding * 2 - artReserved - trayReserved - cavaReserved + 20)
+readonly property real textWidth: Math.max(0, width - horizontalPadding * 2 - artReserved - cavaReserved)
     readonly property real centeredX: horizontalPadding + artReserved
     readonly property real lyricHiddenLeftX: -textWidth - hiddenLeftPadding
     readonly property real timeHiddenRightX: width + hiddenRightPadding
@@ -62,9 +66,9 @@ readonly property real textWidth: Math.max(0, width - horizontalPadding * 2 - ar
         4,
         timeX + (textWidth - visibleTimeWidth) / 2 - recordingDotSpacing - timeRecordingIndicator.width
     )
-   readonly property real preferredWidth: Math.max(
-        140 + trayTotalWidth + cavaReserved,
-        Math.min(Math.max(minimumWidth, maximumWidth), lyricMetrics.advanceWidth + horizontalPadding * 2 + 28 + cavaReserved)
+readonly property real preferredWidth: Math.max(
+140 + cavaReserved + artReservedForWidth,
+        Math.min(Math.max(minimumWidth, maximumWidth), lyricMetrics.advanceWidth + horizontalPadding * 2 + 28 + cavaReserved + artReservedForWidth)
     )
     onLyricTextChanged: {
         if (lyricText === activeLyricText) return;
@@ -187,6 +191,7 @@ OpacityMask {
         opacity: clampedProgress
     }
     Text {
+        renderType: Text.NativeRendering
         visible: previousLyricText !== ""
         x: lyricX
         width: textWidth
@@ -205,6 +210,7 @@ OpacityMask {
     }
 
     Text {
+        renderType: Text.NativeRendering
         visible: activeLyricText !== ""
         x: lyricX
         width: textWidth
@@ -223,6 +229,7 @@ OpacityMask {
     }
 
     Text {
+        renderType: Text.NativeRendering
         visible: timeText !== "" && showSecondaryText
         x: timeX
         width: textWidth
@@ -297,15 +304,15 @@ OpacityMask {
                             Repeater {
                                 model: menuOpener.children ? menuOpener.children.values : []
 
-                                delegate: Item {
+delegate: Item {
                                     id: menuItemRect
                                     width: parent.width
-                                    height: modelData.isSeparator ? 0 : (28 + (submenuExpanded ? subCol.implicitHeight : 0))
+                                    height: modelData.isSeparator ? 0 : 28
                                     visible: !modelData.isSeparator
                                     clip: false
-                                    property bool submenuExpanded: false
 
                                     Text {
+                                        renderType: Text.NativeRendering
                                         anchors.verticalCenter: parent.verticalCenter
                                         anchors.left: parent.left
                                         anchors.leftMargin: 8
@@ -320,7 +327,7 @@ OpacityMask {
                                         hoverEnabled: true
                                         onClicked: {
                                             if (modelData.hasChildren) {
-                                                menuItemRect.submenuExpanded = !menuItemRect.submenuExpanded
+                                                submenuPopup.visible = !submenuPopup.visible
                                             } else {
                                                 if (modelData.triggered)
                                                     modelData.triggered()
@@ -329,46 +336,70 @@ OpacityMask {
                                         }
                                     }
 
-                                    Column {
-                                        id: subCol
-                                        visible: menuItemRect.submenuExpanded && modelData.hasChildren
-                                        anchors.top: parent.bottom
-                                        anchors.left: parent.left
-                                        width: parent.width
-                                        spacing: 2
+                                    QsMenuOpener {
+                                        id: subMenuOpener
+                                        menu: modelData.hasChildren ? modelData : null
+                                    }
 
-                                        QsMenuOpener {
-                                            id: subMenuOpener
-                                            menu: modelData.hasChildren ? modelData : null
-                                        }
+                                    // Submenu renders as its own popup window, anchored
+                                    // beside this item, rather than expanding inline —
+                                    // inline expansion required the outer Column to grow
+                                    // exactly in sync with async-loaded submenu content,
+                                    // which drifted out of sync and caused overlap.
+                                    PopupWindow {
+                                        id: submenuPopup
+                                        visible: false
+                                        color: "transparent"
+                                        anchor.item: menuItemRect
+                                        anchor.rect.x: menuItemRect.width
+                                        anchor.rect.y: 0
+                                        implicitWidth: 200
+                                        implicitHeight: submenuColumn.implicitHeight + 16
 
-                                        Repeater {
-                                            model: subMenuOpener.children ? subMenuOpener.children.values : []
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: "#1e1e1e"
+                                            radius: 8
 
-                                            delegate: Rectangle {
-                                                width: parent.width
-                                                height: 28
-                                                color: subMenuArea.containsMouse ? "#333333" : "transparent"
-                                                radius: 4
-                                                visible: !modelData.isSeparator
+                                            Column {
+                                                id: submenuColumn
+                                                anchors.top: parent.top
+                                                anchors.left: parent.left
+                                                anchors.right: parent.right
+                                                anchors.margins: 8
+                                                spacing: 2
 
-                                                Text {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    anchors.left: parent.left
-                                                    anchors.leftMargin: 16
-                                                    text: modelData.text || ""
-                                                    color: "white"
-                                                    font.pixelSize: 12
-                                                }
+                                                Repeater {
+                                                    model: subMenuOpener.children ? subMenuOpener.children.values : []
 
-                                                MouseArea {
-                                                    id: subMenuArea
-                                                    anchors.fill: parent
-                                                    hoverEnabled: true
-                                                    onClicked: {
-                                                        if (modelData.triggered)
-                                                            modelData.triggered()
-                                                        menuPopup.visible = false
+                                                    delegate: Rectangle {
+                                                        width: parent.width
+                                                        height: 28
+                                                        color: subMenuArea.containsMouse ? "#333333" : "transparent"
+                                                        radius: 4
+                                                        visible: !modelData.isSeparator
+
+                                                        Text {
+                                                            renderType: Text.NativeRendering
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            anchors.left: parent.left
+                                                            anchors.leftMargin: 8
+                                                            text: modelData.text || ""
+                                                            color: "white"
+                                                            font.pixelSize: 12
+                                                        }
+
+                                                        MouseArea {
+                                                            id: subMenuArea
+                                                            anchors.fill: parent
+                                                            hoverEnabled: true
+                                                            onClicked: {
+                                                                if (modelData.triggered)
+                                                                    modelData.triggered()
+                                                                submenuPopup.visible = false
+                                                                menuPopup.visible = false
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -400,6 +431,7 @@ OpacityMask {
                     visible: trayIcon.status !== Image.Ready
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: modelData.title ? modelData.title[0] : "?"
                         color: "white"

@@ -50,6 +50,7 @@ Item {
     }
 
     Text {
+        renderType: Text.NativeRendering
         x: labelX
         width: textWidth
         anchors.verticalCenter: parent.verticalCenter

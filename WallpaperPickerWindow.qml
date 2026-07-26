@@ -689,9 +689,16 @@ PanelWindow {
                                     Rectangle {
                                         anchors.bottom: parent.bottom
                                         anchors.left: parent.left; anchors.right: parent.right
-                                        height: 6
+                                        height: 20
                                         color: Qt.rgba(0.4, 0.9, 0.55, 0.85)
                                         visible: cell.isCurrentWallpaper
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "ACTIVE"
+                                            color: "white"; font.pixelSize: 14
+                                            font.family: root.iconFontFamily
+                                            font.weight: Font.Bold
+                                        }
                                     }
                                 }
 

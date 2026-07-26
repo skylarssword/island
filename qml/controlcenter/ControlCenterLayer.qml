@@ -21,8 +21,10 @@ signal appearanceWalColorIndexRequested(int index)
 signal gamemodeToggleRequested()
 signal pinToggleRequested()
     property bool pinned: false
-signal sidebarToggleRequested()
-    property bool sidebarEnabled: false
+signal bubblesToggleRequested()
+    property bool bubblesEnabled: true
+    signal idleModeToggleRequested(bool enabled)
+    property bool idleMode: false
     property bool appearanceMenuOpen: false
     property bool gamemodeCardFlipped: false
     property real capsuleOpacity: 0.20
@@ -78,8 +80,35 @@ property bool bluetoothPanelOpen: false
 property bool screenshotPanelOpen: false
    property bool batteryDrawerOpen: false
 property bool powerMenuOpen: false
-    property bool gamemodeActive: false
+property bool gamemodeActive: false
 property bool notificationPanelOpen: false
+    property bool idleSettingsOpen: false
+    property var idleTimeouts: ({ dim: 480, lock: 600, displayoff: 660, suspend: 1800 })
+
+readonly property var idleOptions: [
+        { label: "Never",       value: -1 },
+        { label: "5 minutes",   value: 300 },
+        { label: "8 minutes",   value: 480 },
+        { label: "10 minutes",  value: 600 },
+        { label: "11 minutes",  value: 660 },
+        { label: "15 minutes",  value: 900 },
+        { label: "30 minutes",  value: 1800 },
+        { label: "45 minutes",  value: 2700 },
+        { label: "60 minutes",  value: 3600 },
+        { label: "120 minutes", value: 7200 }
+    ]
+
+    function idleOptionIndex(key) {
+        const val = idleTimeouts[key];
+        const idx = idleOptions.findIndex(o => o.value === val);
+        return idx >= 0 ? idx : 0;
+    }
+
+    function setIdleTimeout(key, seconds) {
+        idleTimeouts[key] = seconds;
+        idleTimeoutsChanged();
+        idleApplyExec.run(key, seconds);
+    }
     property var notificationHistory: []
     property int expandedNotificationIndex: -1
 
@@ -90,7 +119,31 @@ property bool notificationPanelOpen: false
     property bool hyprsunsetActive: false
     property string screenshotMode: "area"
     property bool screenshotCapturing: false
-    property bool batteryDrawerDragging: false
+property bool batteryDrawerDragging: false
+    property bool showBatteryTime: false
+    property string batteryTimeText: ""
+
+    Process {
+        id: batteryTimeQuery
+        property string _buf: ""
+        command: ["bash", "-c", "upower -i $(upower -e | grep BAT) | awk '/state:/ {state=$2} /time to empty:/ {h=int($4); m=int(($4-h)*60)} /time to full:/ {m=int($4); h=int(m/60); m=m%60} END {if (state==\"charging\") printf \"Full in: %dh %dm\", h, m; else printf \"Left: %dh %dm\", h, m}'"]
+        stdout: SplitParser { onRead: batteryTimeQuery._buf += data }
+        onRunningChanged: {
+            if (!running) {
+                controlCenter.batteryTimeText = batteryTimeQuery._buf.trim()
+                batteryTimeQuery._buf = ""
+            }
+        }
+    }
+
+    Timer {
+        id: batteryTimePollTimer
+        interval: 30000
+        running: controlCenter.showBatteryTime
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: if (!batteryTimeQuery.running) batteryTimeQuery.running = true
+    }
     property real batteryDrawerProgress: 0
     property bool batteryDrawerSettling: false
     readonly property bool batteryDrawerMoving: batteryDrawerDragging
@@ -874,8 +927,9 @@ function toggleScreenshotPanel() {
     opacity: showCondition ? 1 : 0
     visible: opacity > 0
 
-    onBrightnessLevelChanged: syncBrightnessFromLevel(brightnessLevel)
+onBrightnessLevelChanged: syncBrightnessFromLevel(brightnessLevel)
     onVolumeLevelChanged: syncVolumeFromLevel(volumeLevel)
+    onIsChargingChanged: if (showBatteryTime && !batteryTimeQuery.running) batteryTimeQuery.running = true
     onShowConditionChanged: {
 if (showCondition) {
             syncLevelsFromProps();
@@ -989,6 +1043,14 @@ closeConnectivityPanels();
 Process {
         id: powerExec
         function run(cmd) { command = ["bash", "-c", cmd]; running = true }
+    }
+
+    Process {
+        id: idleApplyExec
+        function run(key, seconds) {
+            command = ["set-hypridle", key, String(seconds)]
+            running = true
+        }
     }
 
 
@@ -1185,6 +1247,7 @@ Column {
                 height: parent.height
 
                 Text {
+                    renderType: Text.NativeRendering
                     id: timeLabel
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
@@ -1196,7 +1259,8 @@ Column {
                     font.letterSpacing: -0.45
                 }
 
-                Text {
+Text {
+    renderType: Text.NativeRendering
                     anchors.left: timeLabel.right
                     anchors.leftMargin: 10
                     anchors.baseline: timeLabel.baseline
@@ -1205,6 +1269,7 @@ Column {
                     font.pixelSize: 12
                     font.family: textFontFamily
                     font.weight: Font.Medium
+                    visible: !controlCenter.showBatteryTime
                 }
             }
 
@@ -1215,6 +1280,7 @@ Row {
                 spacing: 5
 
                 Text {
+                    renderType: Text.NativeRendering
                     text: controlCenter.chargingIconGlyph
                     color: StyleTokens.white
                     font.pixelSize: 13
@@ -1223,13 +1289,21 @@ Row {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                Text {
-                    text: batteryCapacity + "%"
+Text {
+    renderType: Text.NativeRendering
+                    text: controlCenter.showBatteryTime
+                          ? controlCenter.batteryTimeText
+                          : batteryCapacity + "%"
                     color: StyleTokens.white
                     font.pixelSize: 13
                     font.family: textFontFamily
                     font.weight: Font.DemiBold
                     anchors.verticalCenter: parent.verticalCenter
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: controlCenter.showBatteryTime = !controlCenter.showBatteryTime
+                    }
                 }
 
                 Item {
@@ -1296,6 +1370,7 @@ Row {
                     Behavior on border.color { ColorAnimation { duration: 150 } }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: "\uf186"
                         font.family: iconFontFamily
@@ -1347,6 +1422,7 @@ Row {
                     Behavior on border.color { ColorAnimation { duration: 150 } }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: "\uf1fc"
                         font.family: iconFontFamily
@@ -1387,6 +1463,7 @@ Row {
                     Behavior on border.color { ColorAnimation { duration: 150 } }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: "\uf0f3"
                         font.family: iconFontFamily
@@ -1405,6 +1482,7 @@ Rectangle {
                         anchors.rightMargin: -2
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: controlCenter.notificationHistory.length > 9 ? "9+" : controlCenter.notificationHistory.length
                             color: "white"
@@ -1424,6 +1502,7 @@ Rectangle {
                         anchors.leftMargin: -2
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: "\uf186"
                             font.family: iconFontFamily
@@ -1467,6 +1546,7 @@ onClicked: {
                     Behavior on border.color { ColorAnimation { duration: 150 } }
 
 Text {
+    renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: "\uf011"
                         font.family: iconFontFamily
@@ -1531,6 +1611,7 @@ Rectangle {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.leftMargin: 14
                         anchors.top: parent.top
@@ -1593,6 +1674,7 @@ Rectangle {
                         height: 30
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.right: wifiChevron.left
                             anchors.rightMargin: 8
@@ -1606,6 +1688,7 @@ Rectangle {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.right: wifiChevron.left
                             anchors.rightMargin: 8
@@ -1619,6 +1702,7 @@ Rectangle {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             id: wifiChevron
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
@@ -1665,6 +1749,7 @@ Rectangle {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.leftMargin: 14
                         anchors.top: parent.top
@@ -1727,6 +1812,7 @@ Rectangle {
                         height: 30
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.right: bluetoothChevron.left
                             anchors.rightMargin: 8
@@ -1740,6 +1826,7 @@ Rectangle {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.right: bluetoothChevron.left
                             anchors.rightMargin: 8
@@ -1753,6 +1840,7 @@ Rectangle {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             id: bluetoothChevron
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
@@ -1849,6 +1937,7 @@ Rectangle {
                     visible: !gamemodeCard.showBackFace
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.leftMargin: 14
                         anchors.top: parent.top
@@ -1897,6 +1986,7 @@ Rectangle {
                         height: 30
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.right: gamemodeFrontChevron.left
                             anchors.rightMargin: 8
@@ -1910,6 +2000,7 @@ Rectangle {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.right: gamemodeFrontChevron.left
                             anchors.rightMargin: 8
@@ -1923,6 +2014,7 @@ Rectangle {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             id: gamemodeFrontChevron
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
@@ -1972,6 +2064,7 @@ Rectangle {
                         height: 24
 
                         Text {
+                            renderType: Text.NativeRendering
                             id: gamemodeBackChevron
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
@@ -1983,6 +2076,7 @@ Rectangle {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: gamemodeBackChevron.right
                             anchors.leftMargin: 4
                             anchors.verticalCenter: parent.verticalCenter
@@ -2000,6 +2094,7 @@ Rectangle {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.right: parent.right
                         anchors.rightMargin: 12
                         anchors.top: parent.top
@@ -2063,6 +2158,7 @@ Rectangle {
                                         Behavior on color { ColorAnimation { duration: 140 } }
 
                                         Text {
+                                            renderType: Text.NativeRendering
                                             anchors.centerIn: parent
                                             text: controlCenter.batteryModeGlyphs[index]
                                             color: index === controlCenter.batteryModeIndex ? StyleTokens.module : StyleTokens.textDim
@@ -2151,6 +2247,7 @@ Rectangle {
 
                // Camera icon top-left
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.left: parent.left
                     anchors.leftMargin: 14
                     anchors.top: parent.top
@@ -2205,6 +2302,7 @@ Rectangle {
                     height: 30
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.top: parent.top
                         text: "Screenshot Menu"
@@ -2215,6 +2313,7 @@ Rectangle {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.bottom: parent.bottom
                         text: "Press toggle icon to open"
@@ -2385,6 +2484,7 @@ Rectangle {
                                 }
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.centerIn: parent
                                     text: modelData.icon
                                     font.family: iconFontFamily
@@ -2403,13 +2503,233 @@ Rectangle {
                                 }
                             }
 
-                            Text {
+Text {
+    renderType: Text.NativeRendering
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: modelData.label
                                 color: StyleTokens.textMuted
                                 font.pixelSize: 9
                                 font.family: textFontFamily
                                 font.weight: Font.Medium
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
+// ── Idle settings (separate bubble, tied to power menu) ─────────────
+        Item {
+            id: idleSettingsPanel
+            width: parent.width
+            height: controlCenter.powerMenuOpen ? idleSettingsContent.height : 0
+            clip: true
+
+            Behavior on height {
+                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+            }
+
+            Rectangle {
+                id: idleSettingsContent
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                implicitHeight: idleSettingsColumn.implicitHeight + 28
+                radius: 20
+                color: Qt.rgba(1,1,1,0.05)
+                border.width: 1
+                border.color: Qt.rgba(1,1,1,0.16)
+
+                Column {
+                    id: idleSettingsColumn
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 14
+                    spacing: 8
+
+Item {
+                        width: parent.width
+                        height: 26
+
+                        Text {
+                            renderType: Text.NativeRendering
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Idle Settings"
+                            color: StyleTokens.textSecondary
+                            font.pixelSize: 11
+                            font.family: textFontFamily
+                            font.weight: Font.Medium
+                        }
+
+                        Rectangle {
+                            id: idleHeaderToggleBtn
+                            width: 26
+                            height: 26
+                            radius: 13
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: controlCenter.idleSettingsOpen || idleHeaderToggleMouse.containsMouse
+                                   ? Qt.rgba(1,1,1,0.14) : Qt.rgba(1,1,1,0.08)
+                            border.width: 1
+                            border.color: controlCenter.idleSettingsOpen
+                                          ? Qt.rgba(1,1,1,0.4)
+                                          : (idleHeaderToggleMouse.containsMouse ? Qt.rgba(1,1,1,0.3) : Qt.rgba(1,1,1,0.2))
+
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                            Text {
+                                renderType: Text.NativeRendering
+                                anchors.centerIn: parent
+                                text: "\u25BE"
+                                color: controlCenter.idleSettingsOpen ? StyleTokens.textPrimary : StyleTokens.textSecondary
+                                font.pixelSize: 12
+                                rotation: controlCenter.idleSettingsOpen ? 180 : 0
+                                Behavior on rotation { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                            }
+
+                            MouseArea {
+                                id: idleHeaderToggleMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: controlCenter.idleSettingsOpen = !controlCenter.idleSettingsOpen
+                            }
+                        }
+                    }
+
+                    Item {
+                        id: idleSettingsDrawer
+                        width: parent.width
+                        height: controlCenter.idleSettingsOpen ? idleColumn.implicitHeight : 0
+                        clip: true
+                        Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+                        Column {
+                            id: idleColumn
+                            width: parent.width
+                            spacing: 8
+                            topPadding: 4
+
+                            Repeater {
+                                model: [
+                                    { key: "dim",        label: "Dim Display" },
+                                    { key: "lock",       label: "Lock Screen" },
+                                    { key: "displayoff", label: "Turn Display Off" },
+                                    { key: "suspend",    label: "Suspend" }
+                                ]
+
+                                delegate: Row {
+                                    required property var modelData
+                                    width: idleColumn.width
+                                    spacing: 8
+
+Text {
+    renderType: Text.NativeRendering
+                                        width: 108
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: modelData.label
+                                        color: controlCenter.textSecondary
+                                        font.pixelSize: 10
+                                        font.family: textFontFamily
+                                        font.weight: Font.Medium
+                                        elide: Text.ElideRight
+                                    }
+
+ComboBox {
+                                        id: idleCombo
+                                        width: idleColumn.width - 116
+                                        height: 30
+                                        model: controlCenter.idleOptions.map(o => o.label)
+                                        currentIndex: controlCenter.idleOptionIndex(modelData.key)
+                                        onActivated: index => {
+                                            controlCenter.setIdleTimeout(
+                                                modelData.key,
+                                                controlCenter.idleOptions[index].value
+                                            )
+                                        }
+
+                                        background: Rectangle {
+                                            radius: 10
+                                            color: idleCombo.hovered ? Qt.rgba(1,1,1,0.09) : Qt.rgba(1,1,1,0.05)
+                                            border.width: 1
+                                            border.color: idleCombo.popup.visible ? Qt.rgba(1,1,1,0.30) : Qt.rgba(1,1,1,0.16)
+                                            Behavior on color { ColorAnimation { duration: 120 } }
+                                            Behavior on border.color { ColorAnimation { duration: 120 } }
+                                        }
+
+                                        contentItem: Text {
+     renderType: Text.NativeRendering
+                                            text: idleCombo.displayText
+                                            color: StyleTokens.textSecondary
+                                            font.pixelSize: 11
+                                            font.family: controlCenter.textFontFamily
+                                            font.weight: Font.Medium
+                                            verticalAlignment: Text.AlignVCenter
+                                            leftPadding: 10
+                                            rightPadding: 22
+                                            elide: Text.ElideRight
+                                        }
+
+                                        indicator: Text {
+     renderType: Text.NativeRendering
+                                            text: "\u25BE"
+                                            color: StyleTokens.textSecondary
+                                            font.pixelSize: 10
+                                            anchors.right: parent.right
+                                            anchors.rightMargin: 10
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+
+                                        popup: Popup {
+                                            y: idleCombo.height + 4
+                                            width: idleCombo.width
+                                            implicitHeight: Math.min(contentItem.implicitHeight, 200)
+                                            padding: 4
+
+                                            background: Rectangle {
+                                                radius: 12
+                                                color: Qt.rgba(0.08, 0.08, 0.10, 0.97)
+                                                border.width: 1
+                                                border.color: Qt.rgba(1,1,1,0.16)
+                                            }
+
+                                            contentItem: ListView {
+                                                clip: true
+                                                implicitHeight: contentHeight
+                                                model: idleCombo.popup.visible ? idleCombo.delegateModel : null
+                                                currentIndex: idleCombo.highlightedIndex
+                                                ScrollIndicator.vertical: ScrollIndicator {}
+                                            }
+                                        }
+
+                                        delegate: ItemDelegate {
+                                            id: idleComboDelegate
+                                            width: idleCombo.width
+                                            height: 28
+                                            highlighted: idleCombo.highlightedIndex === index
+
+                                            background: Rectangle {
+                                                radius: 8
+                                                color: idleComboDelegate.highlighted ? Qt.rgba(1,1,1,0.10) : StyleTokens.transparent
+                                            }
+
+                                            contentItem: Text {
+     renderType: Text.NativeRendering
+                                                text: modelData
+                                                color: idleComboDelegate.highlighted ? StyleTokens.textPrimary : StyleTokens.textSecondary
+                                                font.pixelSize: 11
+                                                font.family: controlCenter.textFontFamily
+                                                font.weight: Font.Medium
+                                                verticalAlignment: Text.AlignVCenter
+                                                leftPadding: 10
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -2452,6 +2772,7 @@ Item {
                         height: 24
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             text: "Notifications"
@@ -2471,6 +2792,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "DND"
                                     color: controlCenter.textSecondary
@@ -2512,6 +2834,7 @@ Item {
                             }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "Clear All"
                                 visible: controlCenter.notificationHistory.length > 0
@@ -2537,6 +2860,7 @@ Item {
                         height: controlCenter.notificationHistory.length > 0 ? 220 : 50
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             visible: controlCenter.notificationHistory.length === 0
                             text: "No notifications yet"
@@ -2603,6 +2927,7 @@ Item {
                                                     ? "file://" + notifRow.entry.appIcon : ""
                                         }
                                         Text {
+                                            renderType: Text.NativeRendering
                                             anchors.centerIn: parent
                                             visible: !notifIconImg.visible
                                             text: "\uf0f3"
@@ -2614,6 +2939,7 @@ Item {
                                     }
 
                                     Text {
+                                        renderType: Text.NativeRendering
                                         anchors.right: parent.right
                                         anchors.top: parent.top
                                         anchors.margins: 9
@@ -2634,6 +2960,7 @@ Item {
                                         spacing: 2
 
                                         Text {
+                                            renderType: Text.NativeRendering
                                             width: parent.width
                                             text: notifRow.entry.appName || ""
                                             color: controlCenter.textPrimary
@@ -2643,6 +2970,7 @@ Item {
                                             elide: Text.ElideRight
                                         }
                                         Text {
+                                            renderType: Text.NativeRendering
                                             width: parent.width
                                             text: notifRow.entry.summary || ""
                                             color: controlCenter.textSecondary
@@ -2653,6 +2981,7 @@ Item {
                                             maximumLineCount: notifRow.isExpanded ? 2 : 1
                                         }
                                         Text {
+                                            renderType: Text.NativeRendering
                                             width: parent.width
                                             visible: notifRow.isExpanded && notifRow.hasBody
                                             text: notifRow.entry.body || ""
@@ -2719,6 +3048,7 @@ Rectangle {
                         height: 24
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             text: "Appearance"
@@ -2738,6 +3068,7 @@ Row {
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "Pin Island"
                                     color: controlCenter.textSecondary
@@ -2771,7 +3102,7 @@ Row {
                                         }
                                     }
 
-                                    MouseArea {
+MouseArea {
                                         anchors.fill: parent
                                         onClicked: controlCenter.pinToggleRequested()
                                     }
@@ -2783,8 +3114,9 @@ Row {
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: "Sidebar"
+                                    text: "Bubbles"
                                     color: controlCenter.textSecondary
                                     font.pixelSize: 10
                                     font.family: controlCenter.textFontFamily
@@ -2792,12 +3124,12 @@ Row {
                                 }
 
                                 Rectangle {
-                                    id: sidebarSwitchTrack
+                                    id: bubblesSwitchTrack
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: 34
                                     height: 20
                                     radius: 10
-                                    color: controlCenter.sidebarEnabled ? StyleTokens.success : StyleTokens.switchOff
+                                    color: controlCenter.bubblesEnabled ? StyleTokens.success : StyleTokens.switchOff
 
                                     Behavior on color {
                                         ColorAnimation { duration: StyleTokens.durationFast }
@@ -2808,7 +3140,7 @@ Row {
                                         height: 16
                                         radius: 8
                                         y: 2
-                                        x: controlCenter.sidebarEnabled ? 16 : 2
+                                        x: controlCenter.bubblesEnabled ? 16 : 2
                                         color: StyleTokens.white
 
                                         Behavior on x {
@@ -2818,7 +3150,7 @@ Row {
 
                                     MouseArea {
                                         anchors.fill: parent
-                                        onClicked: controlCenter.sidebarToggleRequested()
+                                        onClicked: controlCenter.bubblesToggleRequested()
                                     }
                                 }
                             }
@@ -2828,6 +3160,7 @@ Row {
                                 anchors.verticalCenter: parent.verticalCenter
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "Pywal"
                                     color: controlCenter.textSecondary
@@ -2882,6 +3215,7 @@ Rectangle {
                         Behavior on color { ColorAnimation { duration: 150 } }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: "Preview"
                             color: "white"
@@ -2943,6 +3277,7 @@ Rectangle {
                                 Behavior on border.color { ColorAnimation { duration: 120 } }
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.centerIn: parent
                                     text: swatchDelegate.index
                                     color: "white"
@@ -2984,6 +3319,7 @@ Rectangle {
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     id: presetLabel
                                     anchors.centerIn: parent
                                     text: Math.round(parent.modelData * 100) + "%"
@@ -3007,7 +3343,117 @@ Rectangle {
             }
         }
 
-ControlSliderCard {
+// ── Island Settings drawer ─────────────────────────────────────────
+        Item {
+            id: islandSettingsDrawer
+            width: parent.width
+            height: controlCenter.appearanceMenuOpen ? islandSettingsContent.height + 12 : 0
+            clip: true
+
+            Behavior on height {
+                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+            }
+
+            Rectangle {
+                id: islandSettingsContent
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                implicitHeight: islandSettingsColumn.implicitHeight + 28
+                radius: 20
+                color: Qt.rgba(1,1,1,0.05)
+                border.width: 1
+                border.color: Qt.rgba(1,1,1,0.16)
+
+                Column {
+                    id: islandSettingsColumn
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 14
+                    spacing: 10
+
+                    Item {
+                        width: parent.width
+                        height: 24
+
+                        Text {
+                            renderType: Text.NativeRendering
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Focus Settings"
+                            color: controlCenter.textPrimary
+                            font.pixelSize: 13
+                            font.family: controlCenter.textFontFamily
+                            font.weight: Font.DemiBold
+                        }
+
+                        Row {
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 6
+
+                            Text {
+                                renderType: Text.NativeRendering
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "Focus Mode"
+                                color: controlCenter.textSecondary
+                                font.pixelSize: 10
+                                font.family: controlCenter.textFontFamily
+                                font.weight: Font.Medium
+                            }
+
+                            Rectangle {
+                                id: idleModeSwitchTrack
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 34
+                                height: 20
+                                radius: 10
+                                color: controlCenter.idleMode ? StyleTokens.success : StyleTokens.switchOff
+
+                                Behavior on color {
+                                    ColorAnimation { duration: StyleTokens.durationFast }
+                                }
+
+                                Rectangle {
+                                    width: 16
+                                    height: 16
+                                    radius: 8
+                                    y: 2
+                                    x: controlCenter.idleMode ? 16 : 2
+                                    color: StyleTokens.white
+
+                                    Behavior on x {
+                                        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+                                    }
+                                }
+
+MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        controlCenter.idleMode = !controlCenter.idleMode
+                                        controlCenter.idleModeToggleRequested(controlCenter.idleMode)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        renderType: Text.NativeRendering
+                        width: parent.width
+                        text: "Hides the island and moves widgets to the background layer. Everything is visible on empty workspaces and hidden when windows are open."
+                        color: controlCenter.textSecondary
+                        font.pixelSize: 10
+                        font.family: controlCenter.textFontFamily
+                        wrapMode: Text.WordWrap
+                        opacity: 0.7
+                    }
+                }
+            }
+        }
+
+        ControlSliderCard {
             id: brightnessCard
             visible: !controlCenter.powerMenuOpen && !controlCenter.notificationPanelOpen && !controlCenter.appearanceMenuOpen
             opacity: (controlCenter.powerMenuOpen || controlCenter.notificationPanelOpen || controlCenter.appearanceMenuOpen) ? 0 : 1

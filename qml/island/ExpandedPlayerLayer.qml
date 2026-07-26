@@ -123,6 +123,7 @@ Column {
             height: 7
 
             Text {
+                renderType: Text.NativeRendering
                 anchors.centerIn: parent
                 visible: root.mediaWorkspaceId >= 1
                 text: "Active In: Workspace " + root.mediaWorkspaceId
@@ -178,6 +179,7 @@ Column {
                     spacing: 4
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: currentTrack
                         color: "white"
                         font.pixelSize: 16
@@ -189,6 +191,7 @@ Column {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: currentArtist
                         color: "#8e8e93"
                         font.pixelSize: 14
@@ -250,6 +253,7 @@ Column {
             height: 16
 
             Text {
+                renderType: Text.NativeRendering
                 id: timeL
                 anchors.left: parent.left
                 text: timePlayed
@@ -304,6 +308,7 @@ Rectangle {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 id: timeR
                 anchors.right: parent.right
                 text: timeTotal

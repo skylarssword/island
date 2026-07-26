@@ -49,6 +49,7 @@ Rectangle {
         anchors.margins: 12
 
         Text {
+            renderType: Text.NativeRendering
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             text: root.hasProvider ? root.provider.bluetoothGlyph : ""
@@ -58,6 +59,7 @@ Rectangle {
         }
 
         Text {
+            renderType: Text.NativeRendering
             anchors.left: parent.left
             anchors.leftMargin: 26
             anchors.top: parent.top
@@ -74,6 +76,7 @@ Rectangle {
         }
 
         Text {
+            renderType: Text.NativeRendering
             anchors.left: parent.left
             anchors.leftMargin: 26
             anchors.bottom: parent.bottom
@@ -87,6 +90,7 @@ Rectangle {
         }
 
         Text {
+            renderType: Text.NativeRendering
             id: actionLabel
 
             anchors.right: parent.right

@@ -41,6 +41,7 @@ Item {
     }
 
     Text {
+        renderType: Text.NativeRendering
         x: contentX
         width: parent.width
         anchors.verticalCenter: parent.verticalCenter

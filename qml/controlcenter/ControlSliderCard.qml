@@ -46,6 +46,7 @@ radius: 24
         anchors.margins: 12
 
         Text {
+            renderType: Text.NativeRendering
             anchors.left: parent.left
             anchors.top: parent.top
             text: root.title
@@ -75,6 +76,7 @@ radius: 24
                 color: StyleTokens.transparent
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.centerIn: parent
                     text: root.iconText
                     color: root.textSecondary

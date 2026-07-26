@@ -31,6 +31,7 @@ Item {
         clip: true
 
         Text {
+            renderType: Text.NativeRendering
             anchors.centerIn: parent
             text: currentTime
             color: "white"

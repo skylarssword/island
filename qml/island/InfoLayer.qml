@@ -453,6 +453,7 @@ Row {
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 Text {
+                    renderType: Text.NativeRendering
                     id: tabTxt
                     anchors.centerIn: parent
                     text: modelData.label
@@ -506,6 +507,7 @@ MouseArea {
                     spacing: 6
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: root.wxLoading ? "Loading…" : (root.wxError !== "" ? root.wxError : root.displayCity)
                         color: root.wxError !== "" ? "#ff6b6b" : "white"
                         opacity: 0.7
@@ -517,6 +519,7 @@ MouseArea {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: "↺"
                         color: "white"
                         opacity: 0.4
@@ -552,6 +555,7 @@ onAccepted: {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.fill: parent
                             anchors.leftMargin: 0
                             text: "Search city…"
@@ -572,6 +576,7 @@ onAccepted: {
                     visible: root.weatherCode !== -1 && !root.wxLoading
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: wmoIcon(root.weatherCode, root.isDay)
                         font.pixelSize: 36
                         anchors.verticalCenter: parent.verticalCenter
@@ -583,6 +588,7 @@ onAccepted: {
                         spacing: 0
 
                         Text {
+                            renderType: Text.NativeRendering
                             text: Math.round(root.tempF) + "°F"
                             color: "white"
                             font.pixelSize: 28
@@ -591,6 +597,7 @@ onAccepted: {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             text: root.weatherDesc
                             color: "white"
                             opacity: 0.6
@@ -608,18 +615,30 @@ onAccepted: {
 
                     Column {
                         spacing: 1
-                        Text { text: "Feels"; color: "white"; opacity: 0.4; font.pixelSize: 11; font.family: textFontFamily }
-                        Text { text: Math.round(root.feelsLikeF) + "°"; color: "white"; font.pixelSize: 11; font.family: textFontFamily; font.weight: Font.Bold }
+                        Text {
+                            renderType: Text.NativeRendering
+ text: "Feels"; color: "white"; opacity: 0.4; font.pixelSize: 11; font.family: textFontFamily }
+                        Text {
+                            renderType: Text.NativeRendering
+ text: Math.round(root.feelsLikeF) + "°"; color: "white"; font.pixelSize: 11; font.family: textFontFamily; font.weight: Font.Bold }
                     }
                     Column {
                         spacing: 1
-                        Text { text: "Wind"; color: "white"; opacity: 0.4; font.pixelSize: 11; font.family: textFontFamily }
-                        Text { text: Math.round(root.windMph) + " mph"; color: "white"; font.pixelSize: 11; font.family: textFontFamily; font.weight: Font.Bold }
+                        Text {
+                            renderType: Text.NativeRendering
+ text: "Wind"; color: "white"; opacity: 0.4; font.pixelSize: 11; font.family: textFontFamily }
+                        Text {
+                            renderType: Text.NativeRendering
+ text: Math.round(root.windMph) + " mph"; color: "white"; font.pixelSize: 11; font.family: textFontFamily; font.weight: Font.Bold }
                     }
                     Column {
                         spacing: 1
-                        Text { text: "Humid"; color: "white"; opacity: 0.4; font.pixelSize: 11; font.family: textFontFamily }
-                        Text { text: root.humidity + "%"; color: "white"; font.pixelSize: 11; font.family: textFontFamily; font.weight: Font.Bold }
+                        Text {
+                            renderType: Text.NativeRendering
+ text: "Humid"; color: "white"; opacity: 0.4; font.pixelSize: 11; font.family: textFontFamily }
+                        Text {
+                            renderType: Text.NativeRendering
+ text: root.humidity + "%"; color: "white"; font.pixelSize: 11; font.family: textFontFamily; font.weight: Font.Bold }
                     }
                 }
 
@@ -636,6 +655,7 @@ onAccepted: {
                             spacing: 0
 
                             Text {
+                                renderType: Text.NativeRendering
                                 text: index === 0 ? "Today" : shortDay(root.forecastDates[index])
                                 color: "white"
                                 opacity: index === 0 ? 0.9 : 0.5
@@ -646,6 +666,7 @@ onAccepted: {
                             }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 text: wmoIcon(root.forecastCodes[index] || 0, true)
                                 font.pixelSize: 11
                                 width: 18
@@ -653,6 +674,7 @@ onAccepted: {
                             }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 text: root.forecastPrecip[index] > 0 ? root.forecastPrecip[index] + "%" : ""
                                 color: "#60a5fa"
                                 font.pixelSize: 11
@@ -662,6 +684,7 @@ onAccepted: {
                             }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 text: Math.round(root.forecastMin[index] || 0) + "°"
                                 color: "white"
                                 opacity: 0.5
@@ -706,6 +729,7 @@ onAccepted: {
                             }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 text: Math.round(root.forecastMax[index] || 0) + "°"
                                 color: "white"
                                 font.pixelSize: 10
@@ -741,6 +765,7 @@ onAccepted: {
                     width: parent.width
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: "‹"
                         color: "white"
                         font.pixelSize: 15
@@ -757,6 +782,7 @@ onAccepted: {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: monthNames[calMonth] + " " + calYear
                         color: "white"
                         font.pixelSize: 12
@@ -768,6 +794,7 @@ onAccepted: {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: "›"
                         color: "white"
                         font.pixelSize: 15
@@ -790,6 +817,7 @@ onAccepted: {
                     Repeater {
                         model: ["M","T","W","T","F","S","S"]
                         Text {
+                            renderType: Text.NativeRendering
                             text: modelData
                             color: "white"
                             opacity: 0.4
@@ -822,6 +850,7 @@ onAccepted: {
                                 color: model.tod ? "white" : "transparent"
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.centerIn: parent
                                     text: model.day
                                     color: model.tod ? "black" : "white"
@@ -878,6 +907,7 @@ onAccepted: {
                         spacing: 10
 
                         Text {
+                            renderType: Text.NativeRendering
                             text: root.clipHoveredIsImage ? "󰋼  Image Preview" : "󰈙  Content Preview"
                             color: "white"; opacity: 0.7
                             font.pixelSize: 11; font.family: root.textFontFamily; font.weight: Font.Bold
@@ -899,6 +929,7 @@ onAccepted: {
                                 clip: true; boundsBehavior: Flickable.StopAtBounds
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     id: clipPreviewText
                                     width: parent.width
                                     text: root.clipDecodedText !== "" ? root.clipDecodedText : root.clipHoveredPreview
@@ -914,6 +945,7 @@ onAccepted: {
                             }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.top: parent.top; anchors.right: parent.right; anchors.margins: 8
                                 text: "Decoding…"
                                 color: "white"; opacity: 0.35; font.pixelSize: 10
@@ -940,9 +972,13 @@ onAccepted: {
                                 Column {
                                     anchors.centerIn: parent; spacing: 6
                                     visible: parent.status === Image.Error || parent.status === Image.Null
-                                    Text { anchors.horizontalCenter: parent.horizontalCenter
+                                    Text {
+                                        renderType: Text.NativeRendering
+ anchors.horizontalCenter: parent.horizontalCenter
                                            text: "󰋼"; color: "white"; opacity: 0.2; font.pixelSize: 32 }
-                                    Text { anchors.horizontalCenter: parent.horizontalCenter
+                                    Text {
+                                        renderType: Text.NativeRendering
+ anchors.horizontalCenter: parent.horizontalCenter
                                            text: "Preview unavailable"; color: "white"; opacity: 0.35
                                            font.pixelSize: 11; font.family: root.textFontFamily }
                                 }
@@ -974,6 +1010,7 @@ onAccepted: {
                             spacing: 0
 
                             Text {
+                                renderType: Text.NativeRendering
                                 text: "󰅌  Clipboard"
                                 color: "white"; opacity: 0.8
                                 font.pixelSize: 13; font.family: root.textFontFamily; font.weight: Font.Bold
@@ -989,6 +1026,7 @@ onAccepted: {
                                 Behavior on color { ColorAnimation { duration: 150 } }
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.centerIn: parent
                                     text: "󰃢  Clear"
                                     color: "white"; opacity: 0.7
@@ -1015,7 +1053,9 @@ onAccepted: {
 
                             Row {
                                 anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 8; spacing: 6
-                                Text { text: "󰍉"; color: "white"; opacity: 0.4; font.pixelSize: 12
+                                Text {
+                                    renderType: Text.NativeRendering
+ text: "󰍉"; color: "white"; opacity: 0.4; font.pixelSize: 12
                                        anchors.verticalCenter: parent.verticalCenter }
                                 TextInput {
                                     id: clipSearchInput
@@ -1025,6 +1065,7 @@ onAccepted: {
                                     activeFocusOnPress: true
                                     onTextChanged: { root.clipSearch = text; clipSearchDelay.restart() }
                                     Text {
+                                        renderType: Text.NativeRendering
                                         anchors.fill: parent
                                         text: "Search history…"
                                         color: "white"; opacity: 0.3
@@ -1042,9 +1083,13 @@ onAccepted: {
                             visible: clipModel.count === 0
                             Column {
                                 anchors.centerIn: parent; spacing: 6
-                                Text { anchors.horizontalCenter: parent.horizontalCenter
+                                Text {
+                                    renderType: Text.NativeRendering
+ anchors.horizontalCenter: parent.horizontalCenter
                                        text: "󰅌"; color: "white"; opacity: 0.15; font.pixelSize: 36 }
-                                Text { anchors.horizontalCenter: parent.horizontalCenter
+                                Text {
+                                    renderType: Text.NativeRendering
+ anchors.horizontalCenter: parent.horizontalCenter
                                        text: "Nothing copied yet"
                                        color: "white"; opacity: 0.35; font.pixelSize: 11
                                        font.family: root.textFontFamily }
@@ -1072,12 +1117,14 @@ onAccepted: {
                                     spacing: 8
 
                                     Text {
+                                        renderType: Text.NativeRendering
                                         text: model.preview.startsWith("[[") ? "󰋼" : "󰆒"
                                         color: "white"; opacity: 0.4; font.pixelSize: 13
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
 
                                     Text {
+                                        renderType: Text.NativeRendering
                                         text: model.preview
                                         color: "white"; opacity: 0.8
                                         font.pixelSize: 12; font.family: root.textFontFamily
@@ -1087,6 +1134,7 @@ onAccepted: {
                                     }
 
                                     Text {
+                                        renderType: Text.NativeRendering
                                         text: "󰆴"
                                         color: clipDelMouse.containsMouse ? "#ff6b6b" : "white"
                                         opacity: clipDelMouse.containsMouse ? 1.0 : 0.25
@@ -1138,6 +1186,7 @@ onAccepted: {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "Click to copy  ·  Hover to preview"
                             color: "white"; opacity: 0.25; font.pixelSize: 10
@@ -1166,12 +1215,14 @@ onAccepted: {
                     width: parent.width; spacing: 0
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: "󰎚  Tide Notes"
                         color: "white"; opacity: 0.8
                         font.pixelSize: 13; font.family: root.textFontFamily; font.weight: Font.Bold
                         width: parent.width - saveStatusText.implicitWidth - 8
                     }
                     Text {
+                        renderType: Text.NativeRendering
                         id: saveStatusText
                         text: root.tideNotesDirty ? "Saving…" : (root.tideNotesLoaded ? "Saved" : "")
                         color: "white"; opacity: 0.35
@@ -1209,6 +1260,7 @@ onAccepted: {
                             selectedTextColor: "white"
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.fill: parent
                                 text: "Start typing…\n\nSaved to ~/.config/quickshell/tide-notes.txt"
                                 color: "white"; opacity: 0.2
@@ -1237,7 +1289,9 @@ onAccepted: {
                         color: copyNotesMouse.containsMouse ? Qt.rgba(1,1,1,0.12) : Qt.rgba(1,1,1,0.06)
                         border.color: Qt.rgba(1,1,1,0.2); border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
-                        Text { anchors.centerIn: parent; text: "󰆒"; color: "white"; font.pixelSize: 14 }
+                        Text {
+                            renderType: Text.NativeRendering
+ anchors.centerIn: parent; text: "󰆒"; color: "white"; font.pixelSize: 14 }
                         MouseArea {
                             id: copyNotesMouse; anchors.fill: parent; hoverEnabled: true
                             onClicked: clipExec.run(["bash", "-c",
@@ -1250,7 +1304,9 @@ onAccepted: {
                         color: clearNotesMouse.containsMouse ? Qt.rgba(1,1,1,0.12) : Qt.rgba(1,1,1,0.06)
                         border.color: Qt.rgba(1,1,1,0.2); border.width: 1
                         Behavior on color { ColorAnimation { duration: 150 } }
-                        Text { anchors.centerIn: parent; text: "󰆴"; color: "white"; font.pixelSize: 14 }
+                        Text {
+                            renderType: Text.NativeRendering
+ anchors.centerIn: parent; text: "󰆴"; color: "white"; font.pixelSize: 14 }
                         MouseArea {
                             id: clearNotesMouse; anchors.fill: parent; hoverEnabled: true
                             onClicked: {
@@ -1286,6 +1342,7 @@ onAccepted: {
                     width: parent.width
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: "󰄳  Tasks"
                         color: "white"; opacity: 0.8
                         font.pixelSize: 13; font.family: root.textFontFamily; font.weight: Font.Bold
@@ -1293,6 +1350,7 @@ onAccepted: {
                         width: parent.width - todoDoneCount.implicitWidth
                     }
                     Text {
+                        renderType: Text.NativeRendering
                         id: todoDoneCount
                         text: {
                             let done = 0
@@ -1320,7 +1378,9 @@ onAccepted: {
 
                     Row {
                         anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 10; spacing: 8
-                        Text { text: "󰐕"; color: "white"; opacity: 0.4; font.pixelSize: 14
+                        Text {
+                            renderType: Text.NativeRendering
+ text: "󰐕"; color: "white"; opacity: 0.4; font.pixelSize: 14
                                anchors.verticalCenter: parent.verticalCenter }
                        TextInput {
                             id: todoAddInput
@@ -1337,6 +1397,7 @@ onAccepted: {
                                 }
                             }
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.fill: parent
                                 text: "Add a task and press Enter…"
                                 color: "white"; opacity: 0.25
@@ -1354,9 +1415,13 @@ onAccepted: {
                     visible: tideTodoModel.count === 0
                     Column {
                         anchors.centerIn: parent; spacing: 6
-                        Text { anchors.horizontalCenter: parent.horizontalCenter
+                        Text {
+                            renderType: Text.NativeRendering
+ anchors.horizontalCenter: parent.horizontalCenter
                                text: "󰄳"; color: "white"; opacity: 0.12; font.pixelSize: 36 }
-                        Text { anchors.horizontalCenter: parent.horizontalCenter
+                        Text {
+                            renderType: Text.NativeRendering
+ anchors.horizontalCenter: parent.horizontalCenter
                                text: "No tasks yet"
                                color: "white"; opacity: 0.3; font.pixelSize: 11
                                font.family: root.textFontFamily }
@@ -1407,6 +1472,7 @@ onAccepted: {
                                         Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
 
                                         Text {
+                                            renderType: Text.NativeRendering
                                             anchors.centerIn: parent; text: "󰄬"
                                             color: "black"; font.pixelSize: 10
                                             visible: todoDone
@@ -1421,6 +1487,7 @@ onAccepted: {
                                     }
 
                                     Text {
+                                        renderType: Text.NativeRendering
                                         text: todoText; color: "white"
                                         opacity: todoDone ? 0.5 : 0.85
                                         font.pixelSize: 12; font.family: root.textFontFamily
@@ -1431,6 +1498,7 @@ onAccepted: {
                                     }
 
                                     Text {
+                                        renderType: Text.NativeRendering
                                         text: "󰅖"; color: delTodoMouse.containsMouse ? "#ff6b6b" : "white"
                                         opacity: delTodoMouse.containsMouse ? 1.0 : 0.2
                                         font.pixelSize: 13
@@ -1455,6 +1523,7 @@ onAccepted: {
                     spacing: 0
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: "Clear done"
                         color: "white"; opacity: clearDoneHover.containsMouse ? 0.7 : 0.3
                         font.pixelSize: 11; font.family: root.textFontFamily
@@ -1472,6 +1541,7 @@ onAccepted: {
                     Item { width: parent.width - 120; height: 1 }
 
                     Text {
+                        renderType: Text.NativeRendering
                         id: clearAllText
                         text: "Clear all"
                         color: "white"; opacity: clearAllHover.containsMouse ? 0.7 : 0.3

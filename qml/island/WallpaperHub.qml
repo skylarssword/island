@@ -401,6 +401,7 @@ Item {
                     spacing: 6
 
                     Text {
+                        renderType: Text.NativeRendering
                         text: "\uf002"
                         font.family: root.iconFontFamily
                         font.pixelSize: 11
@@ -432,6 +433,7 @@ Item {
                         Keys.onTabPressed:    root.activeTab = root.activeTab === 0 ? 1 : 0
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.fill: parent
                             verticalAlignment: Text.AlignVCenter
                             text: root.activeTab === 0
@@ -446,6 +448,7 @@ Item {
                 }
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.right: parent.right; anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
                     text: "\uf00d"
@@ -477,6 +480,7 @@ Item {
                            ? Qt.rgba(1,1,1,0.18) : Qt.rgba(1,1,1,0.07)
                     Behavior on color { ColorAnimation { duration: 120 } }
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: "\uf066"   // collapse/compress-style icon
                         color: "white"
@@ -506,6 +510,7 @@ Item {
                         Behavior on color        { ColorAnimation { duration: 160 } }
                         Behavior on border.color { ColorAnimation { duration: 160 } }
                         Text {
+                            renderType: Text.NativeRendering
                             id: tabLabel; anchors.centerIn: parent
                             text: modelData.label; color: "white"
                             opacity: root.activeTab === modelData.idx ? 0.9 : 0.4
@@ -538,6 +543,7 @@ Item {
                 anchors.centerIn: parent; spacing: 8
                 visible: root.activeList.length === 0
                 Text {
+                    renderType: Text.NativeRendering
                     id: loadingIcon
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: staticScanner.running || videoScanner.running
@@ -552,6 +558,7 @@ Item {
                     }
                 }
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: staticScanner.running || videoScanner.running
                           ? "Scanning…"
@@ -663,6 +670,7 @@ Item {
                                     color: Qt.rgba(1, 1, 1, 0.03)
                                     visible: parent.status !== Loader.Ready || cellItem.thumbSrc === ""
                                     Text {
+                                        renderType: Text.NativeRendering
                                         anchors.centerIn: parent
                                         text: root.activeTab === 0 ? "\uf03e" : "\uf144"
                                         font.family: root.iconFontFamily
@@ -679,6 +687,7 @@ Item {
                                 color: Qt.rgba(0.4, 0.9, 0.55, 0.82)
                                 visible: cellItem.isCurrent
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.centerIn: parent
                                     text: "ACTIVE"
                                     color: "white"; font.pixelSize: 7
@@ -694,6 +703,7 @@ Item {
                                 color: Qt.rgba(0, 0, 0, 0.55)
                                 visible: root.activeTab === 1
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.centerIn: parent; text: "\uf144"
                                     font.family: root.iconFontFamily
                                     font.pixelSize: 7
@@ -750,6 +760,7 @@ Item {
                     color: Qt.rgba(1,1,1,0.07)
                     anchors.verticalCenter: parent.verticalCenter
                     Text {
+                        renderType: Text.NativeRendering
                         id: countText; anchors.centerIn: parent
                         text: root.activeList.length +
                               (root.activeTab === 0 ? " images" : " videos")
@@ -765,6 +776,7 @@ Item {
                            ? Qt.rgba(0.67,0.55,0.98,0.25) : Qt.rgba(1,1,1,0.07)
                     Behavior on color { ColorAnimation { duration: 120 } }
                     Text {
+                        renderType: Text.NativeRendering
                         id: randomLabel; anchors.centerIn: parent
                         text: "\uf522  Random"
                         color: "white"
@@ -784,6 +796,7 @@ Item {
                            ? Qt.rgba(1,0.3,0.3,0.25) : Qt.rgba(1,1,1,0.07)
                     Behavior on color { ColorAnimation { duration: 120 } }
                     Text {
+                        renderType: Text.NativeRendering
                         id: stopAllLabel; anchors.centerIn: parent
                         text: "\uf04d  Stop All"
                         color: "white"
@@ -803,6 +816,7 @@ Item {
                            ? Qt.rgba(1,1,1,0.18) : Qt.rgba(1,1,1,0.07)
                     Behavior on color { ColorAnimation { duration: 120 } }
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: "\uf07b"
                         color: "white"
@@ -823,6 +837,7 @@ Item {
                            ? Qt.rgba(1,1,1,0.18) : Qt.rgba(1,1,1,0.07)
                     Behavior on color { ColorAnimation { duration: 120 } }
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: "\uf0c5"
                         color: "white"
@@ -842,6 +857,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 anchors.right: parent.right
                 anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
@@ -855,6 +871,7 @@ Item {
             }
 
             Text {
+                renderType: Text.NativeRendering
                 anchors.right: parent.right
                 anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
@@ -900,6 +917,7 @@ Item {
                         Behavior on color        { ColorAnimation { duration: 160 } }
                         Behavior on border.color { ColorAnimation { duration: 160 } }
                         Text {
+                            renderType: Text.NativeRendering
                             id: quickTabLabel; anchors.centerIn: parent
                             text: modelData.label; color: "white"
                             opacity: root.activeTab === modelData.idx ? 0.9 : 0.4
@@ -929,6 +947,7 @@ Item {
                        ? Qt.rgba(1,1,1,0.18) : Qt.rgba(1,1,1,0.07)
                 Behavior on color { ColorAnimation { duration: 120 } }
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.centerIn: parent
                     text: "\uf065"   // expand-style icon
                     color: "white"
@@ -955,6 +974,7 @@ Item {
                 visible: root.activeList.length === 0
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: staticScanner.running || videoScanner.running
                           ? "\uf110" : "\uf03e"
@@ -968,6 +988,7 @@ Item {
                     }
                 }
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: staticScanner.running || videoScanner.running
                           ? "Scanning…"
@@ -1115,6 +1136,7 @@ Item {
                                 color: Qt.rgba(1, 1, 1, 0.03)
                                 visible: quickCell.thumbSrc === ""
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.centerIn: parent
                                     text: root.activeTab === 0 ? "\uf03e" : "\uf144"
                                     font.family: root.iconFontFamily
@@ -1130,6 +1152,7 @@ Item {
                                 color: Qt.rgba(0.4, 0.9, 0.55, 0.85)
                                 visible: quickCell.isCurrentWallpaper
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.centerIn: parent
                                     text: "ACTIVE"
                                     color: "white"; font.pixelSize: 9
@@ -1145,6 +1168,7 @@ Item {
                                 color: Qt.rgba(0, 0, 0, 0.55)
                                 visible: root.activeTab === 1
                                 Text {
+                                    renderType: Text.NativeRendering
                                     anchors.centerIn: parent; text: "\uf144"
                                     font.family: root.iconFontFamily
                                     font.pixelSize: 8
@@ -1206,6 +1230,7 @@ Item {
             height: root.quickFooterHeight
 
             Text {
+                renderType: Text.NativeRendering
                 anchors.centerIn: parent
                 text: root.statusMessage !== "" ? root.statusMessage
                       : (root.activeList.length + (root.activeTab === 0 ? " images" : " videos")

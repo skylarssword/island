@@ -54,14 +54,7 @@ TextMetrics {
         font.weight: Font.DemiBold
         text: contentText
     }
-    Rectangle {
-        anchors.fill: parent
-        radius: 20
-        color: Qt.rgba(1,1,1,0.05)
-        border.width: 1
-        border.color: Qt.rgba(1,1,1,0.16)
-    }
-    Row {
+
 
     Row {
         anchors.fill: parent
@@ -73,6 +66,7 @@ TextMetrics {
         anchors.verticalCenter: parent.verticalCenter
 
         Text {
+            renderType: Text.NativeRendering
             width: iconSlotWidth
             anchors.verticalCenter: parent.verticalCenter
             text: iconText
@@ -88,6 +82,7 @@ TextMetrics {
             height: parent.height
 
             Text {
+                renderType: Text.NativeRendering
                 anchors.verticalCenter: parent.verticalCenter
                 text: contentText
                 color: "white"
@@ -110,5 +105,4 @@ lineHeight: 0.95
         cursorShape: Qt.PointingHandCursor
         onClicked: root.activated()
     }
-}
 }

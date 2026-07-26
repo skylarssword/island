@@ -232,6 +232,7 @@ Item {
                 spacing: 8
 
                 Text {
+                    renderType: Text.NativeRendering
                     text: root.isCommandMode ? "\uf120" : "\uf002"
                     font.family: root.iconFontFamily
                     font.pixelSize: 14
@@ -286,6 +287,7 @@ Item {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
                         text: "Search apps or run a command…"
@@ -296,6 +298,7 @@ Item {
                 }
 
                 Text {
+                    renderType: Text.NativeRendering
                     text: "\uf00d"
                     font.family: root.iconFontFamily
                     font.pixelSize: 12
@@ -341,6 +344,7 @@ Item {
                 spacing: 10
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "\uf120"
                     font.family: root.iconFontFamily
@@ -348,6 +352,7 @@ Item {
                     color: "white"; opacity: 0.2
                 }
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "Run in terminal"
                     color: "white"; opacity: 0.4
@@ -366,6 +371,7 @@ Item {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         id: cmdRunLabel
                         anchors.centerIn: parent
                         text: "\uf120  " + root.searchText
@@ -385,6 +391,7 @@ Item {
                     }
                 }
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "Press Enter or click above"
                     color: "white"; opacity: 0.25
@@ -466,6 +473,7 @@ Item {
                                     ? "file://" + app.appIcon : ""
                         }
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: "\uf1b2"
                             font.family: root.iconFontFamily
@@ -476,6 +484,7 @@ Item {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         width: parent.parent.width
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: app.appName || ""

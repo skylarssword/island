@@ -75,6 +75,7 @@ Process {
             spacing: 0
 
             Text {
+                renderType: Text.NativeRendering
                 text: "\uf030  Screenshot"
                 color: "white"
                 font.pixelSize: 14
@@ -93,6 +94,7 @@ Process {
                 anchors.verticalCenter: parent.verticalCenter
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.centerIn: parent
                     text: "\uf021"
                     font.family: panel.iconFontFamily
@@ -112,6 +114,7 @@ Process {
             spacing: 6
 
             Text {
+                renderType: Text.NativeRendering
                 text: "MODE"
                 color: "white"; opacity: 0.4
                 font.pixelSize: 9; font.family: panel.textFontFamily; font.weight: Font.Bold
@@ -142,6 +145,7 @@ Process {
                         Column {
                             anchors.centerIn: parent; spacing: 4
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: modelData.icon
                                 font.family: panel.iconFontFamily; font.pixelSize: 16
@@ -149,6 +153,7 @@ Process {
                                 Behavior on opacity { NumberAnimation { duration: 130 } }
                             }
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: modelData.label
                                 font.family: panel.textFontFamily; font.pixelSize: 10
@@ -171,6 +176,7 @@ Process {
             spacing: 6
 
             Text {
+                renderType: Text.NativeRendering
                 text: "DELAY"
                 color: "white"; opacity: 0.4
                 font.pixelSize: 9; font.family: panel.textFontFamily; font.weight: Font.Bold
@@ -200,6 +206,7 @@ Process {
                         Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: modelData.label
                             font.family: panel.textFontFamily; font.pixelSize: 12
@@ -227,12 +234,14 @@ Process {
             Row {
                 anchors.centerIn: parent; spacing: 8
                 Text {
+                    renderType: Text.NativeRendering
                     text: "\uf030"
                     font.family: panel.iconFontFamily; font.pixelSize: 16
                     color: "white"
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 Text {
+                    renderType: Text.NativeRendering
                     text: "Capture"
                     font.family: panel.textFontFamily; font.pixelSize: 14; font.weight: Font.Bold
                     color: "white"
@@ -254,6 +263,7 @@ Process {
             Row {
                 width: parent.width
                 Text {
+                    renderType: Text.NativeRendering
                     text: "RECENT"
                     color: "white"; opacity: 0.4
                     font.pixelSize: 9; font.family: panel.textFontFamily; font.weight: Font.Bold
@@ -266,6 +276,7 @@ Process {
                     color: folderMouse.containsMouse ? Qt.rgba(1,1,1,0.12) : Qt.rgba(1,1,1,0.06)
                     Behavior on color { ColorAnimation { duration: 120 } }
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: "\uf07c"
                         font.family: panel.iconFontFamily; font.pixelSize: 13
@@ -295,6 +306,7 @@ Item {
                 clip: true
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.centerIn: parent
                     text: "No screenshots yet"
                     color: "white"; opacity: 0.3
@@ -360,12 +372,14 @@ Row {
                                 width: parent.width - 70 - 6 - 90 - 6
 
                                 Text {
+                                    renderType: Text.NativeRendering
                                     text: ssName
                                     color: "white"; opacity: 0.8
                                     font.pixelSize: 10; font.family: panel.textFontFamily
                                     elide: Text.ElideRight; width: parent.width
                                 }
                                 Text {
+                                    renderType: Text.NativeRendering
                                     text: "Click to copy"
                                     color: "white"; opacity: 0.3
                                     font.pixelSize: 9; font.family: panel.textFontFamily
@@ -380,7 +394,9 @@ Row {
                                     width: 26; height: 26; radius: 8
                                     color: copyMouse.containsMouse ? Qt.rgba(1,1,1,0.18) : Qt.rgba(1,1,1,0.08)
                                     Behavior on color { ColorAnimation { duration: 120 } }
-                                    Text { anchors.centerIn: parent; text: "\uf0c5"; font.family: panel.iconFontFamily; font.pixelSize: 12; color: "white"; opacity: 0.7 }
+                                    Text {
+                                        renderType: Text.NativeRendering
+ anchors.centerIn: parent; text: "\uf0c5"; font.family: panel.iconFontFamily; font.pixelSize: 12; color: "white"; opacity: 0.7 }
                                     MouseArea { id: copyMouse; anchors.fill: parent; hoverEnabled: true; onClicked: copyExec.run(ssPath) }
                                 }
 
@@ -388,7 +404,9 @@ Row {
                                     width: 26; height: 26; radius: 8
                                     color: openMouse.containsMouse ? Qt.rgba(1,1,1,0.18) : Qt.rgba(1,1,1,0.08)
                                     Behavior on color { ColorAnimation { duration: 120 } }
-                                    Text { anchors.centerIn: parent; text: "\uf35d"; font.family: panel.iconFontFamily; font.pixelSize: 12; color: "white"; opacity: 0.7 }
+                                    Text {
+                                        renderType: Text.NativeRendering
+ anchors.centerIn: parent; text: "\uf35d"; font.family: panel.iconFontFamily; font.pixelSize: 12; color: "white"; opacity: 0.7 }
                                     MouseArea { id: openMouse; anchors.fill: parent; hoverEnabled: true; onClicked: openExec.run(ssPath) }
                                 }
 
@@ -396,7 +414,9 @@ Row {
                                     width: 26; height: 26; radius: 8
                                     color: deleteMouse.containsMouse ? Qt.rgba(1,0.2,0.2,0.35) : Qt.rgba(1,1,1,0.08)
                                     Behavior on color { ColorAnimation { duration: 120 } }
-                                    Text { anchors.centerIn: parent; text: "\uf1f8"; font.family: panel.iconFontFamily; font.pixelSize: 12; color: deleteMouse.containsMouse ? "#ff6b6b" : "white"; opacity: 0.7 }
+                                    Text {
+                                        renderType: Text.NativeRendering
+ anchors.centerIn: parent; text: "\uf1f8"; font.family: panel.iconFontFamily; font.pixelSize: 12; color: deleteMouse.containsMouse ? "#ff6b6b" : "white"; opacity: 0.7 }
                                     MouseArea {
                                         id: deleteMouse; anchors.fill: parent; hoverEnabled: true
                                         onClicked: {

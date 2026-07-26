@@ -457,6 +457,7 @@ Item {
             height: 28
 
             Text {
+                renderType: Text.NativeRendering
                 anchors.left: parent.left
                 anchors.leftMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
@@ -477,6 +478,7 @@ Item {
                 spacing: 6
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.min(implicitWidth, 140)
                     horizontalAlignment: Text.AlignRight
@@ -505,6 +507,7 @@ Item {
                     Behavior on color { ColorAnimation { duration: 120 } }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: controlCenter.expandedView ? "⤡" : "⤢"
                         color: controlCenter.expandedView ? cardAccent : StyleTokens.textSubtle
@@ -532,6 +535,7 @@ Item {
                     Behavior on color { ColorAnimation { duration: 120 } }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.centerIn: parent
                         text: "🗑"
                         color: deleteCacheMouse.containsMouse ? StyleTokens.error : StyleTokens.textSubtle
@@ -596,6 +600,7 @@ Item {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.leftMargin: 14
                         anchors.top: parent.top
@@ -630,6 +635,7 @@ Item {
                         height: 30
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.right: lrclibChevron.left
                             anchors.rightMargin: 8
@@ -643,6 +649,7 @@ Item {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.right: lrclibChevron.left
                             anchors.rightMargin: 8
@@ -658,6 +665,7 @@ Item {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             id: lrclibChevron
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
@@ -708,6 +716,7 @@ Rectangle {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         anchors.left: parent.left
                         anchors.leftMargin: 14
                         anchors.top: parent.top
@@ -728,6 +737,7 @@ Rectangle {
                         height: 30
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.right: fileChevron.left
                             anchors.rightMargin: 8
@@ -741,6 +751,7 @@ Rectangle {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.left: parent.left
                             anchors.right: fileChevron.left
                             anchors.rightMargin: 8
@@ -756,6 +767,7 @@ Rectangle {
                         }
 
                         Text {
+                            renderType: Text.NativeRendering
                             id: fileChevron
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
@@ -819,6 +831,7 @@ Rectangle {
                         color: refreshMouse.containsMouse ? moduleHover : moduleColor
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: "Retry"
                             color: textPrimary
@@ -855,6 +868,7 @@ Rectangle {
                             Behavior on height { NumberAnimation { duration: 160 } }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.centerIn: parent
                                 text: "Searching LRCLib..."
                                 color: textSecondary
@@ -871,6 +885,7 @@ Rectangle {
                             Behavior on height { NumberAnimation { duration: 160 } }
 
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.centerIn: parent
                                 text: lrclibErrorText
                                 color: StyleTokens.error
@@ -907,6 +922,7 @@ Rectangle {
                                         opacity: 0.85
 
                                         Text {
+                                            renderType: Text.NativeRendering
                                             anchors.centerIn: parent
                                             text: modelData.hasSynced ? "LRC" : "TXT"
                                             color: "white"
@@ -922,6 +938,7 @@ Rectangle {
                                         spacing: 1
 
                                         Text {
+                                            renderType: Text.NativeRendering
                                             width: parent.width
                                             text: modelData.title
                                             color: textPrimary
@@ -932,6 +949,7 @@ Rectangle {
                                         }
 
                                         Text {
+                                            renderType: Text.NativeRendering
                                             width: parent.width
                                             text: modelData.artist + (modelData.album !== "" ? " · " + modelData.album : "")
                                             color: StyleTokens.textMuted
@@ -942,6 +960,7 @@ Rectangle {
                                     }
 
                                     Text {
+                                        renderType: Text.NativeRendering
                                         id: durationLabel
                                         anchors.verticalCenter: parent.verticalCenter
                                         visible: modelData.duration > 0
@@ -995,6 +1014,7 @@ Rectangle {
                     spacing: 8
 
                     Text {
+                        renderType: Text.NativeRendering
                         width: parent.width
                         text: "Load a .lrc or .txt file for this track. It will be saved to the\nlyrics cache and used automatically next time."
                         color: textSecondary
@@ -1013,6 +1033,7 @@ Rectangle {
                         Behavior on color { ColorAnimation { duration: 100 } }
 
                         Text {
+                            renderType: Text.NativeRendering
                             anchors.centerIn: parent
                             text: "Browse for .lrc file…"
                             color: "white"
@@ -1073,6 +1094,7 @@ Rectangle {
                     highlightMoveDuration: 200
 
                     delegate: Text {
+     renderType: Text.NativeRendering
                         width: lyricViewerList.width
                         text: modelData.text || ". . ."
                         color: index === controlCenter.viewerActiveIndex ? cardAccent : StyleTokens.textMuted
@@ -1110,6 +1132,7 @@ Rectangle {
                     boundsBehavior: Flickable.StopAtBounds
 
                     Text {
+                        renderType: Text.NativeRendering
                         id: plainViewerText
                         width: parent.width
                         text: controlCenter.viewerPlainText
@@ -1122,6 +1145,7 @@ Rectangle {
                 }
 
                 Text {
+                    renderType: Text.NativeRendering
                     anchors.centerIn: parent
                     visible: controlCenter.viewerMode === "none"
                     text: "No lyrics loaded"
@@ -1198,6 +1222,7 @@ Rectangle {
                         highlightMoveDuration: 200
 
                         delegate: Text {
+     renderType: Text.NativeRendering
                             width: expandedLyricList.width
                             text: modelData.text || ". . ."
                             color: index === controlCenter.viewerActiveIndex ? "#ffffff" : "#8e8e93"
@@ -1235,6 +1260,7 @@ Rectangle {
                         boundsBehavior: Flickable.StopAtBounds
 
                         Text {
+                            renderType: Text.NativeRendering
                             id: expandedPlainText
                             width: parent.width
                             text: controlCenter.viewerPlainText
@@ -1253,6 +1279,7 @@ Rectangle {
                     height: 16
 
                     Text {
+                        renderType: Text.NativeRendering
                         id: expTimeL
                         anchors.left: parent.left
                         text: controlCenter.timePlayedLocal
@@ -1296,6 +1323,7 @@ Rectangle {
                     }
 
                     Text {
+                        renderType: Text.NativeRendering
                         id: expTimeR
                         anchors.right: parent.right
                         text: controlCenter.timeTotalLocal
@@ -1349,6 +1377,7 @@ Item {
                             scale: rewindMouse.pressed ? 0.85 : 1.0
                             Behavior on scale { NumberAnimation { duration: 100 } }
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.centerIn: parent
                                 text: "↺"
                                 color: "white"
@@ -1399,6 +1428,7 @@ Item {
                             scale: forwardMouse.pressed ? 0.85 : 1.0
                             Behavior on scale { NumberAnimation { duration: 100 } }
                             Text {
+                                renderType: Text.NativeRendering
                                 anchors.centerIn: parent
                                 text: "↻"
                                 color: "white"
