@@ -753,6 +753,8 @@ property bool expandedByPlayerAutoOpen: false
             || islandState === "control_center"
             || islandState === "lyrics_control_center"
             || islandState === "equalizer"
+            || islandState === "power_menu"
+            || islandState === "notification_center"
             || islandState === "notification"
         readonly property bool splitShowsProgress: islandState === "split" && osdProgress >= 0
         readonly property bool splitShowsText: islandState === "split" && osdProgress < 0 && osdCustomText !== ""
@@ -794,6 +796,8 @@ property bool expandedByPlayerAutoOpen: false
         readonly property bool bluetoothExpandedLayerVisible: !root.overviewVisible && islandState === "bluetooth_expanded"
                 readonly property bool notificationLayerVisible: !root.overviewVisible && islandState === "notification"
 readonly property bool controlCenterLayerVisible: !root.overviewVisible && islandState === "control_center"
+readonly property bool powerMenuLayerVisible: !root.overviewVisible && islandState === "power_menu"
+readonly property bool notificationCenterLayerVisible: !root.overviewVisible && islandState === "notification_center"
 readonly property bool capturingLayerVisible: !root.overviewVisible && islandState === "capturing"
         readonly property bool searchLayerVisible: !root.overviewVisible && islandState === "search"
         readonly property bool lyricsControlCenterLayerVisible: !root.overviewVisible && islandState === "lyrics_control_center"
@@ -1551,6 +1555,24 @@ function toggleDnd() {
             stopAutoHideTimer();
         }
 
+        function showPowerMenu() {
+            cancelSideSwipeSettle();
+            abortSideTransientMode();
+            clearTransientCapsule();
+            islandState = "power_menu";
+            mainCapsule.displayedWidth = mainCapsule.baseTargetWidth;
+            stopAutoHideTimer();
+        }
+
+        function showNotificationCenter() {
+            cancelSideSwipeSettle();
+            abortSideTransientMode();
+            clearTransientCapsule();
+            islandState = "notification_center";
+            mainCapsule.displayedWidth = mainCapsule.baseTargetWidth;
+            stopAutoHideTimer();
+        }
+
 function showSearch() {
             cancelSideSwipeSettle()
             abortSideTransientMode()
@@ -1737,6 +1759,10 @@ case "capturing":
                 case "control_center":
                 case "lyrics_control_center":
                     return 420;
+                case "power_menu":
+                    return 340;
+                case "notification_center":
+                    return 340;
                 case "info":
                     return 600;
                 case "expanded":
@@ -1773,6 +1799,12 @@ case "control_center":
                     if (controlCenterLoader.item && controlCenterLoader.item.appearanceMenuOpen)
                         return controlCenterLoader.item.appearanceMenuTotalHeight
                     return 320 + (controlCenterLoader.item ? controlCenterLoader.item.controlCenterExtraHeight : 32);
+case "power_menu":
+                    return 72;
+                case "notification_center":
+                    return notificationCenterLoader.item
+                        ? Math.min(420, notificationCenterLoader.item.contentHeight)
+                        : 92;
 case "lyrics_control_center": {
                     const lyricsItem = lyricsControlCenterLoader.item;
                     if (lyricsItem && lyricsItem.expandedView && lyricsItem.viewerMode !== "none")
@@ -1806,6 +1838,10 @@ case "capturing":
                 case "control_center":
                 case "lyrics_control_center":
                     return 34;
+                case "power_menu":
+                    return 36;
+                case "notification_center":
+                    return 26;
                     case "info":
                     return 34;
                 case "expanded":
@@ -2507,6 +2543,45 @@ idleMode: root.idleMode
             }
 
             Loader {
+                id: powerMenuLoader
+                anchors.fill: parent
+                active: islandContainer.powerMenuLayerVisible
+                asynchronous: false
+                visible: active
+
+                sourceComponent: Component {
+                    PowerMenuLayer {
+                        iconFontFamily: root.iconFontFamily
+                        textFontFamily: root.textFontFamily
+                        dndActive: islandContainer.dndActive
+                        showCondition: islandContainer.powerMenuLayerVisible
+                        onDndToggleRequested: islandContainer.toggleDnd()
+                        onOpenControlCenterRequested: islandContainer.showControlCenter()
+                        onCloseRequested: islandContainer.smartRestoreState()
+                    }
+                }
+            }
+
+            Loader {
+                id: notificationCenterLoader
+                anchors.fill: parent
+                active: islandContainer.notificationCenterLayerVisible
+                asynchronous: false
+                visible: active
+
+                sourceComponent: Component {
+                    NotificationCenterLayer {
+                        iconFontFamily: root.iconFontFamily
+                        textFontFamily: root.textFontFamily
+                        notificationHistory: islandContainer.notificationHistory
+                        showCondition: islandContainer.notificationCenterLayerVisible
+                        onClearRequested: islandContainer.clearNotificationHistory()
+                        onCloseRequested: islandContainer.smartRestoreState()
+                    }
+                }
+            }
+
+            Loader {
                 id: lyricsControlCenterLoader
                 anchors.fill: parent
                 active: islandContainer.lyricsControlCenterLayerVisible
@@ -2616,6 +2691,14 @@ SystrayBubble {
             textFontFamily: root.textFontFamily
             dndActive: islandContainer.dndActive
             onDndToggleRequested: islandContainer.toggleDnd()
+            onNotificationCenterRequested: {
+                if (islandContainer.islandState === "notification_center") islandContainer.smartRestoreState()
+                else islandContainer.showNotificationCenter()
+            }
+            onPowerMenuRequested: {
+                if (islandContainer.islandState === "power_menu") islandContainer.smartRestoreState()
+                else islandContainer.showPowerMenu()
+            }
             opacity: (root.bubblesEnabled && !root.idleMode) ? 1 : 0
             visible: opacity > 0.01
             Behavior on opacity { NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeOut } }

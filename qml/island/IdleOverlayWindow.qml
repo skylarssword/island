@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../shared"
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Mpris
@@ -812,7 +813,7 @@ readonly property string iconFontFamily: UserConfig.iconFontFamily
                         Rectangle {
                             id: artMask
                             anchors.fill: parent
-                            radius: 16
+                            radius: width / 2
                             visible: false
                         }
 
@@ -820,6 +821,15 @@ readonly property string iconFontFamily: UserConfig.iconFontFamily
                             anchors.fill: parent
                             source: artImage
                             maskSource: artMask
+                        }
+
+                        // Circular hairline outline, shares the shell's border tokens
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: "transparent"
+                            border.width: IslandMotion.surfaceBorderWidth
+                            border.color: IslandMotion.surfaceBorderColor
                         }
                     }
 

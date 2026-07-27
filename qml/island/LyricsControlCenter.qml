@@ -1196,6 +1196,14 @@ Rectangle {
                             maskSource: expandedArtMask
                         }
 
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: "transparent"
+                            border.width: IslandMotion.surfaceBorderWidth
+                            border.color: IslandMotion.surfaceBorderColor
+                        }
+
                         RotationAnimation {
                             target: expandedArtSpinner
                             property: "rotation"

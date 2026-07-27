@@ -17,6 +17,8 @@ Rectangle {
 
     property bool dndActive: false
     signal dndToggleRequested()
+    signal notificationCenterRequested()
+    signal powerMenuRequested()
 
     property bool expanded: false
     readonly property string archGlyph: "󰣇"
@@ -394,7 +396,13 @@ Text {
                 anchors.fill: parent
                 anchors.margins: -4
                 z: 20
-                onClicked: root.dndToggleRequested()
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: (mouse) => {
+                    if (mouse.button === Qt.RightButton)
+                        root.dndToggleRequested()
+                    else
+                        root.notificationCenterRequested()
+                }
             }
         }
 
@@ -424,7 +432,7 @@ Text {
                 anchors.fill: parent
                 anchors.margins: -4
                 z: 20
-                onClicked: {} // no-op — press animation is the only feedback for now
+                onClicked: root.powerMenuRequested()
             }
         }
     }

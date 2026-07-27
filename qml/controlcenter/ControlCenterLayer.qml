@@ -1272,7 +1272,7 @@ Text {
                     font.pixelSize: 12
                     font.family: textFontFamily
                     font.weight: Font.Medium
-                    visible: !controlCenter.showBatteryTime
+                    visible: true
                 }
             }
 
@@ -1443,131 +1443,6 @@ Text {
                             if (controlCenter.appearanceMenuOpen) {
                                 controlCenter.powerMenuOpen = false
                                 controlCenter.notificationPanelOpen = false
-                            }
-                        }
-                    }
-                }
-
-                // ── Notification history button ────────────────────────────
-                Rectangle {
-                    id: notificationBtn
-                    width: 26
-                    height: 26
-                    radius: 13
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: notifBtnMouse.containsMouse || controlCenter.notificationPanelOpen
-                           ? Qt.rgba(1,1,1,0.18) : Qt.rgba(1,1,1,0.08)
-                    border.color: controlCenter.notificationPanelOpen
-                                  ? Qt.rgba(1,1,1,0.4)
-                                  : (notifBtnMouse.containsMouse ? Qt.rgba(1,1,1,0.3) : Qt.rgba(1,1,1,0.2))
-                    border.width: 1
-
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                    Behavior on border.color { ColorAnimation { duration: 150 } }
-
-                    Text {
-                        renderType: Text.NativeRendering
-                        anchors.centerIn: parent
-                        text: "\uf0f3"
-                        font.family: iconFontFamily
-                        font.pixelSize: 13
-                        color: controlCenter.notificationPanelOpen ? StyleTokens.white : IslandMotion.textPrimary
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                    }
-
-Rectangle {
-                        visible: controlCenter.notificationHistory.length > 0
-                        width: 14; height: 14; radius: 7
-                        color: "#ff6b6b"
-                        anchors.top: parent.top
-                        anchors.right: parent.right
-                        anchors.topMargin: -2
-                        anchors.rightMargin: -2
-
-                        Text {
-                            renderType: Text.NativeRendering
-                            anchors.centerIn: parent
-                            text: controlCenter.notificationHistory.length > 9 ? "9+" : controlCenter.notificationHistory.length
-                            color: "white"
-                            font.pixelSize: 8
-                            font.weight: Font.Bold
-                            font.family: textFontFamily
-                        }
-                    }
-
-                    Rectangle {
-                        visible: controlCenter.dndActive
-                        width: 14; height: 14; radius: 7
-                        color: Qt.rgba(0.55, 0.35, 0.85, 1)
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.topMargin: -2
-                        anchors.leftMargin: -2
-
-                        Text {
-                            renderType: Text.NativeRendering
-                            anchors.centerIn: parent
-                            text: "\uf186"
-                            font.family: iconFontFamily
-                            font.pixelSize: 7
-                            color: "white"
-                        }
-                    }
-
-                    MouseArea {
-                        id: notifBtnMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-onClicked: {
-                            controlCenter.notificationPanelOpen = !controlCenter.notificationPanelOpen
-                            if (controlCenter.notificationPanelOpen) {
-                                controlCenter.powerMenuOpen = false
-                                controlCenter.appearanceMenuOpen = false
-                            } else {
-                                controlCenter.expandedNotificationIndex = -1
-                            }
-                        }
-                    }
-                }
-
-                // ── Power button ───────────────────────────────────────────
-                Rectangle {
-                    id: powerBtn
-                    width: 26
-                    height: 26
-                    radius: 13
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: powerBtnMouse.containsMouse || controlCenter.powerMenuOpen
-                           ? Qt.rgba(1, 0.3, 0.3, 0.25)
-                           : Qt.rgba(1, 1, 1, 0.08)
-                    border.color: controlCenter.powerMenuOpen
-                                  ? "#ff6b6b"
-                                  : (powerBtnMouse.containsMouse ? "#ff9999" : Qt.rgba(1,1,1,0.2))
-                    border.width: 1
-
-                    Behavior on color  { ColorAnimation { duration: 150 } }
-                    Behavior on border.color { ColorAnimation { duration: 150 } }
-
-Text {
-    renderType: Text.NativeRendering
-                        anchors.centerIn: parent
-                        text: "\uf011"
-                        font.family: iconFontFamily
-                        font.pixelSize: 13
-                        color: controlCenter.powerMenuOpen ? "#ff6b6b"
-                               : (powerBtnMouse.containsMouse ? "#ff9999" : IslandMotion.textPrimary)
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                    }
-
-MouseArea {
-                        id: powerBtnMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-onClicked: {
-                            controlCenter.powerMenuOpen = !controlCenter.powerMenuOpen
-                            if (controlCenter.powerMenuOpen) {
-                                controlCenter.notificationPanelOpen = false
-                                controlCenter.appearanceMenuOpen = false
                             }
                         }
                     }

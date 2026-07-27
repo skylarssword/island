@@ -131,13 +131,20 @@ Row {
             Rectangle {
                 id: customArtMask
                 anchors.fill: parent
-                radius: 6
+                radius: width / 2
                 visible: false
             }
             OpacityMask {
                 anchors.fill: parent
                 source: customArtImage
                 maskSource: customArtMask
+            }
+            Rectangle {
+                anchors.fill: parent
+                radius: width / 2
+                color: "transparent"
+                border.width: IslandMotion.surfaceBorderWidth
+                border.color: IslandMotion.surfaceBorderColor
             }
         }
 

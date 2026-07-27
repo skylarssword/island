@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Qt5Compat.GraphicalEffects
+import "../shared"
 import IslandBackend
 import Quickshell._Window
 import Quickshell.Services.SystemTray
@@ -169,7 +170,7 @@ Item {
         Rectangle {
             id: artMask
             anchors.fill: parent
-            radius: 6
+            radius: width / 2
             visible: false
         }
 
@@ -177,6 +178,14 @@ OpacityMask {
             anchors.fill: parent
             source: artImage
             maskSource: artMask
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: "transparent"
+            border.width: IslandMotion.surfaceBorderWidth
+            border.color: IslandMotion.surfaceBorderColor
         }
     }
     

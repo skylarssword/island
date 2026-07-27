@@ -170,7 +170,7 @@ Column {
                     Rectangle {
                         id: expandedArtMask
                         anchors.fill: parent
-                        radius: 12
+                        radius: width / 2
                         visible: false
                     }
 
@@ -178,6 +178,15 @@ Column {
                         anchors.fill: parent
                         source: expandedArtImage
                         maskSource: expandedArtMask
+                    }
+
+                    // Circular hairline outline, shares the shell's border tokens
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: width / 2
+                        color: "transparent"
+                        border.width: IslandMotion.surfaceBorderWidth
+                        border.color: IslandMotion.surfaceBorderColor
                     }
                 }
 
