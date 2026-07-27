@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Hyprland
+import Quickshell.Io
 import "../shared"
 
 Item {
@@ -11,6 +12,7 @@ Item {
     property color walColor: "#000000"
     property real capsuleOpacityValue: 0.20
     property bool gamemodeActive: false
+    property string iconFontFamily: "monospace"
 
 signal dotClicked(int workspaceId)
 
@@ -23,6 +25,24 @@ signal dotClicked(int workspaceId)
 readonly property int titleMaxWidth: 440
     readonly property int titlePadding: 14
     property string textFontFamily: "sans-serif"
+
+    // ── App-grid / search launcher glyph ─────────────────────────────────
+    // Lives inside the same pill as the workspace dots (divided by a thin
+    // separator), not a standalone bubble. Fires the same IPC call the
+    // SUPER+D keybind uses, so click and keybind stay in sync with zero
+    // duplicated logic: qs ipc -p /usr/share/tide-island call tide toggleSearch
+    readonly property string gridGlyph: "\uf009" // nf-fa-th-large (4-square grid)
+    readonly property string tideIpcPath: "/usr/share/tide-island"
+    readonly property int gridIconSize: 24
+    readonly property int dividerWidth: 2
+    readonly property int dividerHeight: 16
+    readonly property color dividerColor: IslandMotion.surfaceBorderColor
+    readonly property int bubbleGap: 8
+
+    Process {
+        id: toggleSearchProcess
+        command: ["qs", "ipc", "-p", root.tideIpcPath, "call", "tide", "toggleSearch"]
+    }
 
 // ── Active window title from Hyprland ────────────────────────────────
     readonly property var focusedToplevel: {
@@ -54,19 +74,7 @@ readonly property int titleMaxWidth: 440
         return filtered.sort((a, b) => a.id - b.id)
     }
 
-    readonly property real bubbleContentWidth: {
-        const count = monitorWorkspaces.length
-        if (count === 0) return 0
-        const activeExtra = pillWidth - dotSize
-        return sidePadding * 2
-            + count * dotSize
-            + activeExtra
-            + (count - 1) * dotSpacing
-    }
-
-    readonly property real bubbleWidth: Math.max(70, bubbleContentWidth)
-
- width: bubbleWidth + (showTitleBubble && displayTitle !== "" ? 8 + titleBubble.width : 0)
+width: mainPill.width + (showTitleBubble && displayTitle !== "" ? bubbleGap + titleBubble.width : 0)
     height: 38
     y: 5
 
@@ -74,10 +82,11 @@ readonly property int titleMaxWidth: 440
         NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeArrive }
     }
 
-    // ── Workspace dot pill ───────────────────────────────────────────────
+    // ── Combined pill: grid icon | divider | workspace dots ────────────────
     Rectangle {
-        id: dotPill
-        width: root.bubbleWidth
+        id: mainPill
+        x: 0
+        width: Math.max(70, contentRow.implicitWidth + root.sidePadding * 2)
         height: 38
         radius: 19
 
@@ -87,7 +96,8 @@ readonly property int titleMaxWidth: 440
                 ? Qt.rgba(root.walColor.r, root.walColor.g, root.walColor.b, root.capsuleOpacityValue)
                 : Qt.rgba(0, 0, 0, root.capsuleOpacityValue))
 
-Behavior on color { ColorAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeMove } }
+        Behavior on color { ColorAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeMove } }
+        Behavior on width { NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeArrive } }
 
         border.width: IslandMotion.surfaceBorderWidth
         border.color: IslandMotion.surfaceBorderColor
@@ -99,39 +109,83 @@ Behavior on color { ColorAnimation { duration: IslandMotion.fast; easing.type: I
         }
 
         Row {
-            anchors.centerIn: parent
+            id: contentRow
+            anchors.left: parent.left
+            anchors.leftMargin: root.sidePadding
+            anchors.verticalCenter: parent.verticalCenter
             spacing: root.dotSpacing
 
-            Repeater {
-                model: root.monitorWorkspaces
+            // ── Grid icon (search launcher) ────────────────────────────
+            Item {
+                width: root.gridIconSize
+                height: root.gridIconSize
+                anchors.verticalCenter: parent.verticalCenter
 
-                delegate: Rectangle {
-                    required property var modelData
-                    readonly property bool isActive: modelData.id === root.currentWorkspace
+                Text {
+                    renderType: Text.NativeRendering
+                    anchors.centerIn: parent
+                    text: root.gridGlyph
+                    font.family: root.iconFontFamily
+                    font.pixelSize: 18
+                    color: IslandMotion.textPrimary
+                    scale: gridMouse.pressed ? 0.85 : 1.0
+                    Behavior on scale { NumberAnimation { duration: IslandMotion.micro; easing.type: IslandMotion.easeOut } }
+                }
 
-                    width: isActive ? root.pillWidth : root.dotSize
-                    height: root.dotSize
-                    radius: height / 2
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: isActive ? "white" : Qt.rgba(1, 1, 1, 0.4)
+                MouseArea {
+                    id: gridMouse
+                    anchors.fill: parent
+                    anchors.margins: -8
+                    onClicked: toggleSearchProcess.running = true
+                }
+            }
 
-                    Behavior on width { NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeArrive } }
-                    Behavior on color { ColorAnimation { duration: IslandMotion.micro; easing.type: IslandMotion.easeMove } }
+            // ── Divider ──────────────────────────────────────────────────
+            Rectangle {
+                width: root.dividerWidth
+                height: root.dividerHeight
+                radius: root.dividerWidth / 2
+                color: root.dividerColor
+                anchors.verticalCenter: parent.verticalCenter
+            }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        anchors.margins: -6
-                        onClicked: root.dotClicked(modelData.id)
+            // ── Workspace dots ───────────────────────────────────────────
+            Row {
+                id: dotsRow
+                spacing: root.dotSpacing
+                anchors.verticalCenter: parent.verticalCenter
+
+                Repeater {
+                    model: root.monitorWorkspaces
+
+                    delegate: Rectangle {
+                        required property var modelData
+                        readonly property bool isActive: modelData.id === root.currentWorkspace
+
+                        width: isActive ? root.pillWidth : root.dotSize
+                        height: root.dotSize
+                        radius: height / 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: isActive ? "white" : Qt.rgba(1, 1, 1, 0.4)
+
+                        Behavior on width { NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeArrive } }
+                        Behavior on color { ColorAnimation { duration: IslandMotion.micro; easing.type: IslandMotion.easeMove } }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -6
+                            onClicked: root.dotClicked(modelData.id)
+                        }
                     }
                 }
             }
         }
     }
 
-    // ── Window title bubble ──────────────────────────────────────────────
+    // ── Window title bubble (separate pill, unchanged) ─────────────────────
     Rectangle {
         id: titleBubble
-        x: dotPill.width + 8
+        x: mainPill.width + root.bubbleGap
         y: 0
         height: 38
         radius: 19

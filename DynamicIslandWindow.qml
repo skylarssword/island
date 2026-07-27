@@ -2593,6 +2593,7 @@ WorkspaceBubble {
             monitorName: root.hyprMonitorName
             currentWorkspace: islandContainer.currentWs
             textFontFamily: root.heroFontFamily
+            iconFontFamily: root.iconFontFamily
             useWalColor: root.capsuleUseWalColor
             walColor: root.capsuleWalColor
             capsuleOpacityValue: root.capsuleOpacity
