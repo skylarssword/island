@@ -37,13 +37,13 @@ Item {
         PowerMenuButton {
             glyph: "\uf023"
             iconFontFamily: root.iconFontFamily
-            onActivated: { lockExec.running = true; root.closeRequested() }
+            onActivated: { powerExec.run("pidof hyprlock || hyprlock"); root.closeRequested() }
         }
 
         PowerMenuButton {
             glyph: "\uf2f5"
             iconFontFamily: root.iconFontFamily
-            onActivated: { logoutExec.running = true; root.closeRequested() }
+            onActivated: { powerExec.run("uwsm stop"); root.closeRequested() }
         }
 
         PowerMenuButton {
@@ -57,14 +57,17 @@ Item {
         PowerMenuButton {
             glyph: "\uf021"
             iconFontFamily: root.iconFontFamily
-            onActivated: { reloadExec.running = true; root.closeRequested() }
+            // NOTE: reload behavior is environment-specific -- SIGUSR1 is a
+            // common quickshell reload convention but confirm/adjust for
+            // your actual setup if it doesn't reload for you.
+            onActivated: { powerExec.run("pkill -SIGUSR1 -f quickshell"); root.closeRequested() }
         }
 
         PowerMenuButton {
             glyph: "\uf011"
             iconFontFamily: root.iconFontFamily
             dangerHover: true
-            onActivated: { powerOffExec.running = true; root.closeRequested() }
+            onActivated: { powerExec.run("systemctl poweroff"); root.closeRequested() }
         }
 
         PowerMenuButton {
@@ -74,10 +77,12 @@ Item {
         }
     }
 
-    Process { id: lockExec;     command: ["bash", "-c", "hyprlock || swaylock"] }
-    Process { id: logoutExec;   command: ["bash", "-c", "hyprctl dispatch exit"] }
-    // NOTE: reload behavior is environment-specific -- SIGUSR1 is a common
-    // quickshell reload convention but confirm/adjust for your actual setup.
-    Process { id: reloadExec;   command: ["bash", "-c", "pkill -SIGUSR1 -f quickshell"] }
-    Process { id: powerOffExec; command: ["bash", "-c", "systemctl poweroff"] }
+    // Same run(cmd) pattern ControlCenterLayer's power menu already uses
+    // successfully -- assigning `command` then flipping `running` on a
+    // single reusable Process, rather than pre-baking one Process per
+    // button and toggling `.running = true` directly on each.
+    Process {
+        id: powerExec
+        function run(cmd) { command = ["bash", "-c", cmd]; running = true }
+    }
 }

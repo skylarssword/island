@@ -1457,23 +1457,16 @@ function toggleDnd() {
         }
 
         function openNotificationHistory() {
-            cancelSideSwipeSettle();
-            abortSideTransientMode();
-            clearTransientCapsule();
-            islandState = "control_center";
-            mainCapsule.displayedWidth = mainCapsule.baseTargetWidth;
-            stopAutoHideTimer();
-            notificationHistoryOpenTimer.restart();
+            // Was routing into ControlCenterLayer's baked-in notification
+            // panel (the OLD history UI). Popup taps should land on the
+            // NEW standalone NotificationCenterLayer instead.
+            showNotificationCenter();
         }
 
-        Timer {
-            id: notificationHistoryOpenTimer
-            interval: 0
-            repeat: false
-            onTriggered: {
-                if (controlCenterLoader.item)
-                    controlCenterLoader.item.notificationPanelOpen = true;
-            }
+        function dismissNotificationFromHistory(entryId) {
+            notificationHistory = notificationHistory.filter(function(e) {
+                return e.id !== entryId;
+            });
         }
 
         function suppressCapsuleClick() {
@@ -2577,6 +2570,9 @@ idleMode: root.idleMode
                         showCondition: islandContainer.notificationCenterLayerVisible
                         onClearRequested: islandContainer.clearNotificationHistory()
                         onCloseRequested: islandContainer.smartRestoreState()
+                        onDismissRequested: function(entryId) {
+                            islandContainer.dismissNotificationFromHistory(entryId)
+                        }
                     }
                 }
             }

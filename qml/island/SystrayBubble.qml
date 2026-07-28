@@ -360,9 +360,12 @@ Text {
                 font.family: root.iconFontFamily
                 font.pixelSize: 22
                 color: "white"
+                scale: archMouse.pressed ? 0.82 : 1.0
+                Behavior on scale { NumberAnimation { duration: IslandMotion.micro; easing.type: IslandMotion.easeOut } }
             }
 
             MouseArea {
+                id: archMouse
                 anchors.fill: parent
                 anchors.margins: -4
                 z: 20
