@@ -5,8 +5,6 @@ import "../shared"
 // Notification center island state -- "Notifications" title, a small
 // bell badge top-right, and either "No notifications" or the history
 // list. Rendered inside the capsule like every other layer.
-//
-// Each row: tap to expand/collapse (more room + full body), swipe left
 // to dismiss just that one entry. Ported from the same interaction
 // pattern ControlCenterLayer's older baked-in notification panel used,
 // plus a per-entry app icon that was missing here.
@@ -206,9 +204,9 @@ Item {
                     radius: 12
                     clip: true
 
-                    color: notifCardMouse.containsMouse || notifRow.isExpanded
-                           ? Qt.rgba(0,0,0,0.35)
-                           : Qt.rgba(0,0,0,0.15)
+		color: notifCardMouse.containsMouse || notifRow.isExpanded
+    		   ? Qt.rgba(1,1,1,0.09)
+    		   : Qt.rgba(1,1,1,0.05)
 
                     border.width: IslandMotion.surfaceBorderWidth
                     border.color: IslandMotion.surfaceBorderColor
