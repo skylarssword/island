@@ -7,7 +7,6 @@ import Qt5Compat.GraphicalEffects
 import "../shared"
 
 // Folder, awww flags, post-command, and thumb cache all match waypaper config.
-// NOTE: this component no longer draws its own background/border "card" —
 // it now lives directly inside the parent search capsule (no nested box).
 
 Item {
@@ -21,7 +20,6 @@ Item {
     property string iconFontFamily: ""
     property string textFontFamily: ""
 
-    // ── Sizing (reported up to SearchPillLayer / mainCapsule) ───────────
     readonly property int capsuleWidth: viewMode === "quick" ? quickCapsuleWidth : 760
     readonly property int headerHeight: 40
     readonly property int footerHeight: 36
@@ -55,10 +53,10 @@ Item {
 
     signal closeRequested()
 
-    // ── Config (mirrors waypaper/config.ini) ─────────────────────────────
-    readonly property string wallpaperFolder: "/home/userone/.config/ml4w/wallpapers"
-    readonly property string thumbCacheDir:   "/home/userone/.cache/waypaper"
-    readonly property string postCommand:     "/home/userone/.local/bin/wal-video-fix"
+    // ── Config — paths from IslandConfiguration singleton ────────────────
+    readonly property string wallpaperFolder: IslandConfiguration.wallpaperFolder
+    readonly property string thumbCacheDir:   IslandConfiguration.thumbCacheDir
+    readonly property string postCommand:     IslandConfiguration.postCommand
 
     readonly property string awwwFlags:
         "--transition-type grow " +
@@ -81,7 +79,6 @@ Item {
     property string _staticBuf: ""
     property string _videoBuf:  ""
 
-    // ── Filtered lists ────────────────────────────────────────────────────
     property var filteredStatic: {
         if (searchText.trim() === "") return staticWalls
         let q = searchText.toLowerCase()
@@ -127,11 +124,10 @@ Item {
         onTriggered: root.statusMessage = ""
     }
 
-    // ── Scanners ──────────────────────────────────────────────────────────
     Process {
         id: staticScanner
         command: ["bash", "-c",
-            "find " + root.wallpaperFolder + " -type f " +
+            "find \"" + root.wallpaperFolder + "\" -type f " +
             "\\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' " +
             "-o -iname '*.webp' -o -iname '*.bmp' \\) 2>/dev/null | sort"
         ]
@@ -147,7 +143,7 @@ Item {
     Process {
         id: videoScanner
         command: ["bash", "-c",
-            "find " + root.wallpaperFolder + " -type f " +
+            "find \"" + root.wallpaperFolder + "\" -type f " +
             "\\( -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' " +
             "-o -iname '*.mov' -o -iname '*.avi' -o -iname '*.gif' \\) " +
             "2>/dev/null | sort"
@@ -368,8 +364,7 @@ Item {
     }
 
     // ── UI ────────────────────────────────────────────────────────────────
-    // No outer Rectangle/card here anymore — root is transparent, parent
-    // capsule (mainCapsule) supplies the single shared background/border.
+    // UI — renders inside parent capsule, no own background
 
     Column {
         id: gridModeColumn
@@ -849,8 +844,7 @@ Item {
                     MouseArea {
                         id: openConvMouse; anchors.fill: parent; hoverEnabled: true
                         onClicked: {
-                            openConvFolderProc.command = ["xdg-open",
-                                "/home/userone/Videos/ConversionFolder1080p-30fps"]
+                            openConvFolderProc.command = ["xdg-open", IslandConfiguration.videoFolder]
                             openConvFolderProc.running = true
                         }
                     }

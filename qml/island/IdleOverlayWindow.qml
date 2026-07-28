@@ -85,24 +85,14 @@ PanelWindow {
 
 readonly property string iconFontFamily: UserConfig.iconFontFamily
 
-    // Load custom TTF directly into Qt engine
-    FontLoader {
-        id: flexFontRegular
-        source: "file:///home/userone/.local/share/fonts/FlexRounded-R.ttf"
-    }
-    FontLoader {
-        id: flexFontMedium
-        source: "file:///home/userone/.local/share/fonts/FlexRounded-M.ttf"
-    }
-    FontLoader {
-        id: flexFontBold
-        source: "file:///home/userone/.local/share/fonts/FlexRounded-B.ttf"
-    }
+    // Load custom TTF directly into Qt engine — paths from IslandConfiguration
+    FontLoader { id: flexFontRegular; source: IslandConfiguration.fontRegular }
+    FontLoader { id: flexFontMedium;  source: IslandConfiguration.fontMedium }
+    FontLoader { id: flexFontBold;    source: IslandConfiguration.fontBold }
 
     // Dynamically fallback to font loader's name or exact family string
     readonly property string flexRoundedFamily: flexFontRegular.name !== "" ? flexFontRegular.name : "Google Sans Flex Freeze"
     
-
     property bool gearPopupOpen: false
     property bool mediaWidgetEnabled: true
     property bool showLyricsEnabled: true
@@ -262,7 +252,6 @@ readonly property string iconFontFamily: UserConfig.iconFontFamily
     readonly property string lyricNextText: (lyricsAvailable && lyricActiveIndex >= 0 && lyricActiveIndex + 1 < lyricManager.lines.length)
         ? (lyricManager.lines[lyricActiveIndex + 1].text || "") : ""
 
-    // ── Playhead / progress tracking (independent of lyric availability) ──
     property real trackProgressLocal: 0
     property string timePlayedLocal: "0:00"
     property string timeTotalLocal: "0:00"

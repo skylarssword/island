@@ -1,0 +1,6 @@
+[Unit]
+Description=Downscale videos in ConversionFolder1080p-30fps to 1080p30
+
+[Service]
+Type=oneshot
+ExecStart=/home/userone/.local/bin/tide-video-convert.sh

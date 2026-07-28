@@ -8,25 +8,11 @@ import Qt5Compat.GraphicalEffects
 import IslandBackend
 import "qml/shared"
 
-// ─────────────────────────────────────────────────────────────────────────
-// Standalone wallpaper picker. Completely separate PanelWindow from the
-// tide-island bar — toggling this never touches islandContainer/mainCapsule
-// state in Island.qml. Opened via its own IpcHandler target
-// ("wallpaper-picker"), the same pattern as the "tide" / toggleSearch IPC.
 //
-// Carousel-only, no text search box, no expanded grid, no tabs. Below the
-// carousel is a row of color swatches; clicking one filters the carousel to
-// wallpapers whose auto-extracted dominant color falls in that bucket.
-// ─────────────────────────────────────────────────────────────────────────
 
 PanelWindow {
     id: root
 
-    // ── Public state ────────────────────────────────────────────────────
-    // `screen` is expected to be supplied by whoever instantiates this
-    // (see shell.qml integration snippet) — it is NOT wrapped in a
-    // per-monitor Variants loop, since a single centered picker following
-    // the focused monitor is what we want, not one per screen.
     property bool pickerVisible: false
     readonly property string iconFontFamily: UserConfig.iconFontFamily
 
@@ -39,8 +25,6 @@ PanelWindow {
     WlrLayershell.keyboardFocus: pickerVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     focusable: pickerVisible
 
-    // Only the card itself accepts input; everywhere else on screen is
-    // click-through, exactly like the island's own gesture-strip mask.
     mask: Region {
         Region {
             x: Math.floor(card.x)
@@ -50,8 +34,6 @@ PanelWindow {
         }
     }
 
-    // ── IPC entry point ─────────────────────────────────────────────────
-    // qs ipc -p /usr/share/tide-island call wallpaper-picker toggle
     IpcHandler {
         target: "wallpaper-picker"
         function toggle(): void {
@@ -72,11 +54,7 @@ PanelWindow {
         }
     }
 
-    // ── Appearance sync: read-only mirror of what Island.qml persists,
-    // so this window's card matches the bar's actual capsule look
     // (opacity slider, pywal color toggle, gamemode) instead of a fixed
-    // hardcoded color. Re-read every time the picker opens so it stays
-    // current if you changed these in the control center since last use.
     property real capsuleOpacity: 0.20
     property bool capsuleUseWalColor: false
     property var capsuleWalColors: []
@@ -163,11 +141,10 @@ PanelWindow {
         onTriggered: carousel.forceActiveFocus()
     }
 
-    // ── Config (mirrors WallpaperHub) ───────────────────────────────────
-    readonly property string wallpaperFolder: "/home/userone/.config/ml4w/wallpapers"
-    readonly property string thumbCacheDir:   "/home/userone/.cache/waypaper"
-    readonly property string postCommand:     "/home/userone/.local/bin/wal-video-fix"
-    readonly property string colorCacheFile:  "/home/userone/.cache/quickshell/wallpaper-colors.json"
+    readonly property string wallpaperFolder: IslandConfiguration.wallpaperFolder
+    readonly property string thumbCacheDir:   IslandConfiguration.thumbCacheDir
+    readonly property string postCommand:     IslandConfiguration.postCommand
+    readonly property string colorCacheFile:  IslandConfiguration.colorCacheFile
 
     readonly property string awwwFlags:
         "--transition-type grow " +
@@ -207,11 +184,10 @@ PanelWindow {
         return /\.(mp4|mkv|webm|mov|avi|gif)$/i.test(path)
     }
 
-    // ── Scanners ─────────────────────────────────────────────────────────
     Process {
         id: staticScanner
         command: ["bash", "-c",
-            "find " + root.wallpaperFolder + " -type f " +
+            "find \"" + root.wallpaperFolder + "\" -type f " +
             "\\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' " +
             "-o -iname '*.webp' -o -iname '*.bmp' \\) 2>/dev/null | sort"
         ]
@@ -228,7 +204,7 @@ PanelWindow {
     Process {
         id: videoScanner
         command: ["bash", "-c",
-            "find " + root.wallpaperFolder + " -type f " +
+            "find \"" + root.wallpaperFolder + "\" -type f " +
             "\\( -iname '*.mp4' -o -iname '*.mkv' -o -iname '*.webm' " +
             "-o -iname '*.mov' -o -iname '*.avi' -o -iname '*.gif' \\) " +
             "2>/dev/null | sort"
@@ -243,8 +219,6 @@ PanelWindow {
         }
     }
 
-    // ── Thumbnail path resolver (same hash scheme as WallpaperHub, so it
-    // reuses whatever thumbnails the main shell already generated) ───────
     Process {
         id: thumbMapProc
         property string _buf: ""
@@ -325,7 +299,6 @@ PanelWindow {
         }
     }
 
-    // ── Color cache: load once, then extract only what's missing ────────
     Process {
         id: colorCacheLoader
         property string _buf: ""
@@ -369,7 +342,7 @@ PanelWindow {
     function processNextMissingColor() {
         if (root.colorGenBusy) return
         if (root.missingColorQueue.length === 0) {
-            root.saveColorCacheTimer.restart()
+            saveColorCacheTimer.restart()
             return
         }
         let item = root.missingColorQueue[0]
@@ -418,7 +391,6 @@ PanelWindow {
             JSON.stringify(root.colorMap) + "' > " + JSON.stringify(root.colorCacheFile)]
     }
 
-    // ── Hex → bucket classification (HSV-based) ──────────────────────────
     function bucketFor(hex) {
         if (!hex) return "mono"
         let m = /^#?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})$/.exec(hex)
@@ -449,7 +421,6 @@ PanelWindow {
         return "pink"
     }
 
-    // ── Wallpaper setters ─────────────────────────────────────────────────
     Process {
         id: awwwProc
     }
@@ -706,8 +677,6 @@ PanelWindow {
                                     }
                                 }
 
-                                // Always-on thin hairline (mugen-style), independent of
-                                // the blue selection outline below which only shows on
                                 // the currently active card.
                                 Canvas {
                                     id: hairlineOutline
@@ -769,7 +738,6 @@ PanelWindow {
                     }
                 }
 
-                // ── Color swatches (no labels) ───────────────────────────
                 Row {
                     anchors.horizontalCenter: parent.horizontalCenter
                     height: root.swatchRowHeight
@@ -817,7 +785,6 @@ PanelWindow {
                 }
             }
 
-            // ── Random button — icon only, bottom-right corner of the card ──
             Rectangle {
                 id: randomButton
                 width: 30
@@ -852,8 +819,6 @@ PanelWindow {
                 }
             }
 
-            // ── Media filter toggle — icon only, bottom-left corner ──────────
-            // Cycles all → photo → video → all. Same cycle is triggered by
             // pressing Tab while the carousel has focus.
             Rectangle {
                 id: mediaFilterButton

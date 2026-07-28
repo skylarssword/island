@@ -3,15 +3,16 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import IslandBackend
+import "qml/shared"
 
 Scope {
     id: shellRoot
 
     // ── Global Font Loaders ─────────────────────────────────────────────
-    // Registers the font files into Qt's global font database
-    FontLoader { id: mainFont; source: "file:///home/userone/.local/share/fonts/FlexRounded-R.ttf" }
-    FontLoader { source: "file:///home/userone/.local/share/fonts/FlexRounded-M.ttf" }
-    FontLoader { source: "file:///home/userone/.local/share/fonts/FlexRounded-B.ttf" }
+    // Font paths are defined in qml/shared/IslandConfiguration.qml
+    FontLoader { id: mainFont; source: IslandConfiguration.fontRegular }
+    FontLoader { source: IslandConfiguration.fontMedium }
+    FontLoader { source: IslandConfiguration.fontBold }
 
     readonly property bool screenRecordingActive: SystemServices.screenRecordingActive
     property bool shuttingDown: false
@@ -111,7 +112,6 @@ Scope {
     }
 
     Component.onCompleted: {
-        // Set application-wide default font in Qt engine
         if (mainFont.name !== "") {
             Qt.application.font.family = mainFont.name;
         }
@@ -130,7 +130,6 @@ Scope {
         }
     }
 
-    // ── Standalone wallpaper picker ─────────────────────────────────────
     // One instance only, following whichever monitor is currently
     // focused. Toggled via `qs ipc call wallpaper-picker toggle`
     WallpaperPickerWindow {
