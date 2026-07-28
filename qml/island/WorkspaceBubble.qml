@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import "../shared"
@@ -14,7 +15,7 @@ Item {
     property bool gamemodeActive: false
     property string iconFontFamily: "monospace"
 
-signal dotClicked(int workspaceId)
+    signal dotClicked(int workspaceId)
 
     property bool showTitleBubble: true
 
@@ -22,16 +23,15 @@ signal dotClicked(int workspaceId)
     readonly property int pillWidth: 22
     readonly property int dotSpacing: 8
     readonly property int sidePadding: 12
-readonly property int titleMaxWidth: 440
+    readonly property int titleMaxWidth: 440
     readonly property int titlePadding: 14
     property string textFontFamily: "sans-serif"
 
     // ── App-grid / search launcher glyph ─────────────────────────────────
-    // Lives inside the same pill as the workspace dots (divided by a thin
-    // separator), not a standalone bubble. Fires the same IPC call the
-    // SUPER+D keybind uses, so click and keybind stay in sync with zero
-    // duplicated logic: qs ipc -p /usr/share/tide-island call tide toggleSearch
-    readonly property string gridGlyph: "\uf009" // nf-fa-th-large (4-square grid)
+    // nf-md-view_grid  (a proper 4-square / waffle grid) — same visual weight
+    // as mugen-shell's launcher icon. Falls back to nf-fa-th-large (\uf009)
+    // if your font doesn't carry the md set.
+    readonly property string gridGlyph: "\udb80\uddc4"  // 󰇄  nf-md-view_grid
     readonly property string tideIpcPath: "/usr/share/tide-island"
     readonly property int gridIconSize: 24
     readonly property int dividerWidth: 2
@@ -44,7 +44,7 @@ readonly property int titleMaxWidth: 440
         command: ["qs", "ipc", "-p", root.tideIpcPath, "call", "tide", "toggleSearch"]
     }
 
-// ── Active window title from Hyprland ────────────────────────────────
+    // ── Active window title from Hyprland ────────────────────────────────
     readonly property var focusedToplevel: {
         if (!Hyprland.toplevels || !Hyprland.toplevels.values) return null
         const all = Hyprland.toplevels.values
@@ -61,7 +61,6 @@ readonly property int titleMaxWidth: 440
 
     readonly property string displayTitle: {
         if (rawTitle === "") return rawClass
-        // measure if it fits; we use char count heuristic: >35 chars = too long
         return rawTitle.length > 35 ? rawClass : rawTitle
     }
 
@@ -74,7 +73,7 @@ readonly property int titleMaxWidth: 440
         return filtered.sort((a, b) => a.id - b.id)
     }
 
-width: mainPill.width + (showTitleBubble && displayTitle !== "" ? bubbleGap + titleBubble.width : 0)
+    width: mainPill.width + (showTitleBubble && displayTitle !== "" ? bubbleGap + titleBubble.width : 0)
     height: 38
     y: 5
 
@@ -82,7 +81,7 @@ width: mainPill.width + (showTitleBubble && displayTitle !== "" ? bubbleGap + ti
         NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeArrive }
     }
 
-    // ── Combined pill: grid icon | divider | workspace dots ────────────────
+    // ── Combined pill: grid icon | divider | workspace dots ──────────────
     Rectangle {
         id: mainPill
         x: 0
@@ -115,32 +114,37 @@ width: mainPill.width + (showTitleBubble && displayTitle !== "" ? bubbleGap + ti
             anchors.verticalCenter: parent.verticalCenter
             spacing: root.dotSpacing
 
-            // ── Grid icon (search launcher) ────────────────────────────
+            // ── Grid icon (search / app launcher) ──────────────────────
             Item {
                 width: root.gridIconSize
                 height: root.gridIconSize
                 anchors.verticalCenter: parent.verticalCenter
 
-                Text {
-                    renderType: Text.NativeRendering
+                Image {
                     anchors.centerIn: parent
-                    text: root.gridGlyph
-                    font.family: root.iconFontFamily
-                    font.pixelSize: 18
-                    color: IslandMotion.textPrimary
-                    scale: gridMouse.pressed ? 0.85 : 1.0
-                    Behavior on scale { NumberAnimation { duration: IslandMotion.micro; easing.type: IslandMotion.easeOut } }
+                    width: 22
+                    height: 22
+                    source: Quickshell.shellDir + "/qml/shared/assets/app-launcher.svg"
+                    sourceSize: Qt.size(36, 36)
+                    fillMode: Image.PreserveAspectFit
+                    opacity: gridMouse.containsMouse ? 1.0 : 0.7
+                    scale: gridMouse.containsMouse ? 1.2 : (gridMouse.pressed ? 0.82 : 1.0)
+
+                    Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
                 }
 
                 MouseArea {
                     id: gridMouse
                     anchors.fill: parent
                     anchors.margins: -8
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
                     onClicked: toggleSearchProcess.running = true
                 }
             }
 
-            // ── Divider ──────────────────────────────────────────────────
+            // ── Divider ─────────────────────────────────────────────────
             Rectangle {
                 width: root.dividerWidth
                 height: root.dividerHeight
@@ -149,7 +153,7 @@ width: mainPill.width + (showTitleBubble && displayTitle !== "" ? bubbleGap + ti
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            // ── Workspace dots ───────────────────────────────────────────
+            // ── Workspace dots ──────────────────────────────────────────
             Row {
                 id: dotsRow
                 spacing: root.dotSpacing
@@ -159,6 +163,7 @@ width: mainPill.width + (showTitleBubble && displayTitle !== "" ? bubbleGap + ti
                     model: root.monitorWorkspaces
 
                     delegate: Rectangle {
+                        id: dotDelegate
                         required property var modelData
                         readonly property bool isActive: modelData.id === root.currentWorkspace
 
@@ -166,14 +171,21 @@ width: mainPill.width + (showTitleBubble && displayTitle !== "" ? bubbleGap + ti
                         height: root.dotSize
                         radius: height / 2
                         anchors.verticalCenter: parent.verticalCenter
-                        color: isActive ? "white" : Qt.rgba(1, 1, 1, 0.4)
+                        color: isActive ? "white" : Qt.rgba(1, 1, 1, dotMouse.containsMouse ? 0.65 : 0.4)
+                        opacity: dotMouse.containsMouse && !isActive ? 0.9 : 1.0
+                        scale: dotMouse.containsMouse && !isActive ? 1.25 : 1.0
 
                         Behavior on width { NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeArrive } }
                         Behavior on color { ColorAnimation { duration: IslandMotion.micro; easing.type: IslandMotion.easeMove } }
+                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
                         MouseArea {
+                            id: dotMouse
                             anchors.fill: parent
                             anchors.margins: -6
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
                             onClicked: root.dotClicked(modelData.id)
                         }
                     }
@@ -182,14 +194,14 @@ width: mainPill.width + (showTitleBubble && displayTitle !== "" ? bubbleGap + ti
         }
     }
 
-    // ── Window title bubble (separate pill, unchanged) ─────────────────────
+    // ── Window title bubble (separate pill) ───────────────────────────────
     Rectangle {
         id: titleBubble
         x: mainPill.width + root.bubbleGap
         y: 0
         height: 38
         radius: 19
-width: Math.min(root.titleMaxWidth, titleText.implicitWidth + root.titlePadding * 2)
+        width: Math.min(root.titleMaxWidth, titleText.implicitWidth + root.titlePadding * 2)
         visible: root.showTitleBubble && root.displayTitle !== ""
         opacity: visible ? 1 : 0
 
@@ -212,8 +224,8 @@ width: Math.min(root.titleMaxWidth, titleText.implicitWidth + root.titlePadding 
         border.width: IslandMotion.surfaceBorderWidth
         border.color: IslandMotion.surfaceBorderColor
 
-Text {
-    renderType: Text.NativeRendering
+        Text {
+            renderType: Text.NativeRendering
             id: titleText
             anchors.centerIn: parent
             width: parent.width - root.titlePadding * 2

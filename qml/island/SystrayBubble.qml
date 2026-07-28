@@ -20,12 +20,6 @@ Rectangle {
     signal notificationCenterRequested()
     signal powerMenuRequested()
 
-    // ── Unseen-notification badge + wobble ──────────────────────────────
-    // unseenCount is owned by DynamicIslandWindow (bumped when a
-    // notification arrives, reset when the notification center opens).
-    // notificationPulseToggle simply flips value each time a notification
-    // arrives -- the bell watches it and plays a one-shot wobble, skipped
-    // entirely while DND is active.
     property int unseenCount: 0
     property bool notificationPulseToggle: false
     onNotificationPulseToggleChanged: {
@@ -35,13 +29,11 @@ Rectangle {
 
     property bool expanded: false
     readonly property string archGlyph: "󰣇"
-    readonly property string bellGlyph: "\uf0f3"
-    readonly property string bellSlashGlyph: "\uf1f6"
-readonly property string packageGlyph: "\uf487" // nf-fa-cube (fontawesome)
-    readonly property string powerGlyph: "\uf011" // nf-fa-power_off (fontawesome, matches ControlCenterLayer)
+    // bell glyphs replaced by SVGs — see assets/notification.svg and notification-off.svg
+    readonly property string packageGlyph: "\uf487"
 
     readonly property int glyphSlotWidth: 38
-    readonly property int fixedIconPixelSize: 16 // shared size for notification + power glyphs
+    readonly property int fixedIconPixelSize: 16
     readonly property int trayIconSize: 16
     readonly property int trayIconSpacing: 8
     readonly property int trayGap: 10
@@ -50,7 +42,7 @@ readonly property string packageGlyph: "\uf487" // nf-fa-cube (fontawesome)
     readonly property int dividerWidth: 2
     readonly property int dividerHeight: 16
     readonly property color dividerColor: IslandMotion.surfaceBorderColor
-    readonly property int edgePadding: 12 // breathing room on the arch side and the power side
+    readonly property int edgePadding: 12
 
     property int updatesCount: 0
 
@@ -69,7 +61,7 @@ readonly property string packageGlyph: "\uf487" // nf-fa-cube (fontawesome)
         }
     }
 
-Process {
+    Process {
         id: updatesRunner
         command: ["kitty", "-e", "bash", "-c", "~/.config/ml4w/scripts/ml4w-install-system-updates"]
         onRunningChanged: {
@@ -88,7 +80,7 @@ Process {
         }
     }
 
-width: Math.max(glyphSlotWidth + edgePadding * 2, fixedRow.implicitWidth + edgePadding * 2)
+    width: Math.max(glyphSlotWidth + edgePadding * 2, fixedRow.implicitWidth + edgePadding * 2)
     height: 38
     radius: 19
     y: 5
@@ -109,7 +101,6 @@ width: Math.max(glyphSlotWidth + edgePadding * 2, fixedRow.implicitWidth + edgeP
     border.width: IslandMotion.surfaceBorderWidth
     border.color: IslandMotion.surfaceBorderColor
 
-    // ── Reusable divider ────────────────────────────────────────────────
     component Divider: Rectangle {
         width: root.dividerWidth
         height: root.dividerHeight
@@ -118,12 +109,6 @@ width: Math.max(glyphSlotWidth + edgePadding * 2, fixedRow.implicitWidth + edgeP
         anchors.verticalCenter: parent.verticalCenter
     }
 
-    // ── Whole bubble laid out as one Row, right-anchored. Order left to
-    // right: [expandable tray, revealed on arch click] · arch · | ·
-    // notification · | · power. Power sits pinned to the far right edge;
-    // the Row auto-collapses to just arch+notification+power when the
-    // tray section's `visible` goes false (Positioners skip invisible
-    // children entirely, so no manual width math needed here). ──────────
     Row {
         id: fixedRow
         anchors.right: parent.right
@@ -131,17 +116,17 @@ width: Math.max(glyphSlotWidth + edgePadding * 2, fixedRow.implicitWidth + edgeP
         anchors.verticalCenter: parent.verticalCenter
         spacing: root.trayIconSpacing
 
-        // ── Expandable tray: updates + real tray icons ───────────────────
+        // ── Expandable tray: updates + real tray icons ─────────────────
         Row {
             id: trayRow
             spacing: root.trayIconSpacing
             anchors.verticalCenter: parent.verticalCenter
-opacity: root.expanded ? 1 : 0
+            opacity: root.expanded ? 1 : 0
             visible: opacity > 0.01
 
             Behavior on opacity { NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeOut } }
 
-// ── Update count ─────────────────────────────────────────────────
+            // ── Update count ──────────────────────────────────────────────
             Item {
                 width: updatesRow.implicitWidth
                 height: root.trayIconSize
@@ -159,6 +144,10 @@ opacity: root.expanded ? 1 : 0
                         font.family: root.iconFontFamily
                         font.pixelSize: root.trayIconSize
                         color: "white"
+                        opacity: updatesMouse.containsMouse ? 1.0 : 0.7
+                        scale: updatesMouse.containsMouse ? 1.15 : (updatesMouse.pressed ? 0.82 : 1.0)
+                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
                     }
 
                     Text {
@@ -170,13 +159,18 @@ opacity: root.expanded ? 1 : 0
                         font.pixelSize: 15
                         font.weight: Font.Bold
                         color: "white"
+                        opacity: updatesMouse.containsMouse ? 1.0 : 0.7
+                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                     }
                 }
 
                 MouseArea {
+                    id: updatesMouse
                     anchors.fill: parent
                     anchors.margins: -6
                     z: 10
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
                     enabled: root.expanded
                     onClicked: updatesRunner.running = true
                 }
@@ -186,14 +180,12 @@ opacity: root.expanded ? 1 : 0
                 id: trayRepeater
                 model: SystemTray.items
 
-delegate: Item {
+                delegate: Item {
                     id: trayIconDelegate
                     width: root.trayIconSize
                     height: root.trayIconSize
                     anchors.verticalCenter: parent.verticalCenter
 
-                    // ── Ported verbatim from the working SwipeLyricsLayer tray
-                    // implementation — real popup menu with submenu support.
                     PopupWindow {
                         id: menuPopup
                         visible: false
@@ -239,14 +231,16 @@ delegate: Item {
                                             anchors.left: parent.left
                                             anchors.leftMargin: 8
                                             text: (modelData.text || "") + (modelData.hasChildren ? " ▶" : "")
-                                            color: "white"
+                                            color: menuItemArea.containsMouse ? "white" : Qt.rgba(1,1,1,0.75)
                                             font.pixelSize: 12
+                                            Behavior on color { ColorAnimation { duration: 150 } }
                                         }
 
                                         MouseArea {
                                             id: menuItemArea
                                             anchors.fill: parent
                                             hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
                                             onClicked: {
                                                 if (modelData.hasChildren) {
                                                     menuItemRect.submenuExpanded = !menuItemRect.submenuExpanded
@@ -281,20 +275,24 @@ delegate: Item {
                                                     radius: 4
                                                     visible: !modelData.isSeparator
 
+                                                    Behavior on color { ColorAnimation { duration: 150 } }
+
                                                     Text {
                                                         renderType: Text.NativeRendering
                                                         anchors.verticalCenter: parent.verticalCenter
                                                         anchors.left: parent.left
                                                         anchors.leftMargin: 16
                                                         text: modelData.text || ""
-                                                        color: "white"
+                                                        color: subMenuArea.containsMouse ? "white" : Qt.rgba(1,1,1,0.75)
                                                         font.pixelSize: 12
+                                                        Behavior on color { ColorAnimation { duration: 150 } }
                                                     }
 
                                                     MouseArea {
                                                         id: subMenuArea
                                                         anchors.fill: parent
                                                         hoverEnabled: true
+                                                        cursorShape: Qt.PointingHandCursor
                                                         onClicked: {
                                                             if (modelData.triggered)
                                                                 modelData.triggered()
@@ -321,6 +319,10 @@ delegate: Item {
                         fillMode: Image.PreserveAspectFit
                         visible: status === Image.Ready
                         sourceSize: Qt.size(root.trayIconSize * 2, root.trayIconSize * 2)
+                        opacity: trayMouse.containsMouse ? 1.0 : 0.75
+                        scale: trayMouse.containsMouse ? 1.2 : 1.0
+                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
                     }
 
                     Rectangle {
@@ -334,13 +336,18 @@ delegate: Item {
                             text: modelData.title ? modelData.title[0] : "?"
                             color: "white"
                             font.pixelSize: root.trayIconSize - 2
+                            opacity: trayMouse.containsMouse ? 1.0 : 0.75
+                            Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                         }
                     }
 
                     MouseArea {
+                        id: trayMouse
                         anchors.fill: parent
                         anchors.margins: -6
                         z: 10
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
                         enabled: root.expanded
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         onClicked: (mouse) => {
@@ -359,22 +366,34 @@ delegate: Item {
         // ── Divider between tray section and arch — only when expanded ──
         Divider { visible: root.expanded }
 
-        // ── Arch / CachyOS glyph — expand/collapse trigger ────────────────
+        // ── Chevron expand/collapse trigger — flips when tray opens ────
+        // Pointing right (›) at rest → points left (‹) when expanded,
+        // matching mugen-shell's chevron-double-right / chevron-double-left.
+        // We use a single glyph and rotate 180° so the flip is animated.
         Item {
             id: archIconItem
             width: root.glyphSlotWidth
             height: root.height
             anchors.verticalCenter: parent.verticalCenter
 
-Text {
-    renderType: Text.NativeRendering
+            Image {
+                id: chevronImg
                 anchors.centerIn: parent
-                text: root.archGlyph
-                font.family: root.iconFontFamily
-                font.pixelSize: 22
-                color: "white"
-                scale: archMouse.pressed ? 0.82 : 1.0
-                Behavior on scale { NumberAnimation { duration: IslandMotion.micro; easing.type: IslandMotion.easeOut } }
+                width: 22
+                height: 22
+                source: Quickshell.shellDir + "/qml/shared/assets/chevron-double-left.svg"
+                sourceSize: Qt.size(28, 28)
+                fillMode: Image.PreserveAspectFit
+
+                // Flip 180° when tray is open — same as mugen-shell's left/right swap
+                rotation: root.expanded ? 180 : 0
+
+                opacity: archMouse.containsMouse ? 1.0 : 0.7
+                scale: archMouse.containsMouse ? 1.2 : (archMouse.pressed ? 0.82 : 1.0)
+
+                Behavior on opacity  { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on scale    { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                Behavior on rotation { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
             }
 
             MouseArea {
@@ -382,44 +401,47 @@ Text {
                 anchors.fill: parent
                 anchors.margins: -4
                 z: 20
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
                 onClicked: root.expanded = !root.expanded
             }
         }
 
         Divider {}
 
-        // ── Notification / DND toggle — same click-to-toggle-DND behavior
-        // as before, permanently visible now instead of expand-gated ──────
+        // ── Notification / DND toggle ───────────────────────────────────
         Item {
             id: notificationIconItem
             width: root.glyphSlotWidth
             height: root.height
             anchors.verticalCenter: parent.verticalCenter
 
-            Text {
-                id: bellText
-                renderType: Text.NativeRendering
+            Image {
+                id: bellImg
                 anchors.centerIn: parent
-                text: root.dndActive ? root.bellSlashGlyph : root.bellGlyph
-                font.family: root.iconFontFamily
-                font.pixelSize: root.fixedIconPixelSize
-                color: IslandMotion.textPrimary
-                scale: notificationMouse.pressed ? 0.82 : 1.0
-                Behavior on scale { NumberAnimation { duration: IslandMotion.micro; easing.type: IslandMotion.easeOut } }
+                width: root.fixedIconPixelSize + 6
+                height: root.fixedIconPixelSize + 6
+                source: root.dndActive
+                    ? Quickshell.shellDir + "/qml/shared/assets/notification-off.svg"
+                    : Quickshell.shellDir + "/qml/shared/assets/notification.svg"
+                sourceSize: Qt.size((root.fixedIconPixelSize + 2) * 2, (root.fixedIconPixelSize + 2) * 2)
+                fillMode: Image.PreserveAspectFit
 
-                // One-shot wobble played when a new notification arrives
-                // (see root.onNotificationPulseToggleChanged). Never runs
-                // while DND is active.
+                opacity: notificationMouse.containsMouse ? 1.0 : 0.7
+                scale: notificationMouse.containsMouse ? 1.15 : (notificationMouse.pressed ? 0.82 : 1.0)
+
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on scale   { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+
                 SequentialAnimation {
                     id: bellWobble
-                    NumberAnimation { target: bellText; property: "rotation"; to: 16; duration: 70; easing.type: Easing.OutQuad }
-                    NumberAnimation { target: bellText; property: "rotation"; to: -14; duration: 100; easing.type: Easing.InOutQuad }
-                    NumberAnimation { target: bellText; property: "rotation"; to: 8; duration: 90; easing.type: Easing.InOutQuad }
-                    NumberAnimation { target: bellText; property: "rotation"; to: 0; duration: 90; easing.type: Easing.OutQuad }
+                    NumberAnimation { target: bellImg; property: "rotation"; to: 16;  duration: 70;  easing.type: Easing.OutQuad }
+                    NumberAnimation { target: bellImg; property: "rotation"; to: -14; duration: 100; easing.type: Easing.InOutQuad }
+                    NumberAnimation { target: bellImg; property: "rotation"; to: 8;   duration: 90;  easing.type: Easing.InOutQuad }
+                    NumberAnimation { target: bellImg; property: "rotation"; to: 0;   duration: 90;  easing.type: Easing.OutQuad }
                 }
             }
 
-            // ── Unseen-count badge -- red, bold count, top-right of the bell ──
             Rectangle {
                 id: unseenBadge
                 visible: root.unseenCount > 0
@@ -449,6 +471,8 @@ Text {
                 anchors.fill: parent
                 anchors.margins: -4
                 z: 20
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: (mouse) => {
                     if (mouse.button === Qt.RightButton)
@@ -461,8 +485,7 @@ Text {
 
         Divider {}
 
-        // ── Power — pinned to the far right edge. Tokenized press-down
-        // feedback only; intentionally wired to do nothing else for now ────
+        // ── Power / arch logo — pinned to the far right ─────────────────
         Item {
             id: powerIconItem
             width: root.glyphSlotWidth
@@ -472,12 +495,15 @@ Text {
             Text {
                 renderType: Text.NativeRendering
                 anchors.centerIn: parent
-                text: root.powerGlyph
+                text: root.archGlyph
                 font.family: root.iconFontFamily
-                font.pixelSize: root.fixedIconPixelSize
+                font.pixelSize: 22
                 color: IslandMotion.textPrimary
-                scale: powerMouse.pressed ? 0.82 : 1.0
-                Behavior on scale { NumberAnimation { duration: IslandMotion.micro; easing.type: IslandMotion.easeOut } }
+                opacity: powerMouse.containsMouse ? 1.0 : 0.7
+                scale: powerMouse.containsMouse ? 1.15 : (powerMouse.pressed ? 0.82 : 1.0)
+
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
             }
 
             MouseArea {
@@ -485,6 +511,8 @@ Text {
                 anchors.fill: parent
                 anchors.margins: -4
                 z: 20
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
                 onClicked: root.powerMenuRequested()
             }
         }

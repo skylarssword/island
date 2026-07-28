@@ -37,7 +37,7 @@ readonly property real trayReserved: 0
     property string activeLyricText: lyricText
     property string previousLyricText: ""
     property real lyricChangeProgress: 1
-property int recordingDotSpacing: 12
+property int recordingDotSpacing: -5
     property var cavaLevels: []
 
     readonly property real clampedProgress: Math.max(0, Math.min(1, transitionProgress))
@@ -244,6 +244,7 @@ Column {
     anchors.verticalCenter: parent.verticalCenter
     spacing: -6
     opacity: 1 - clampedProgress
+    visible: timeText !== "" && showSecondaryText
 
     Text {
         renderType: Text.NativeRendering

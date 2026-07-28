@@ -408,6 +408,7 @@ Column {
     anchors.verticalCenter: parent.verticalCenter
     spacing: -6
     opacity: 1 - clampedProgress
+    visible: timeText !== "" && showSecondaryText
 
     Text {
         renderType: Text.NativeRendering
