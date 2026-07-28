@@ -20,6 +20,19 @@ Rectangle {
     signal notificationCenterRequested()
     signal powerMenuRequested()
 
+    // ── Unseen-notification badge + wobble ──────────────────────────────
+    // unseenCount is owned by DynamicIslandWindow (bumped when a
+    // notification arrives, reset when the notification center opens).
+    // notificationPulseToggle simply flips value each time a notification
+    // arrives -- the bell watches it and plays a one-shot wobble, skipped
+    // entirely while DND is active.
+    property int unseenCount: 0
+    property bool notificationPulseToggle: false
+    onNotificationPulseToggleChanged: {
+        if (!root.dndActive)
+            bellWobble.restart()
+    }
+
     property bool expanded: false
     readonly property string archGlyph: "󰣇"
     readonly property string bellGlyph: "\uf0f3"
@@ -384,6 +397,7 @@ Text {
             anchors.verticalCenter: parent.verticalCenter
 
             Text {
+                id: bellText
                 renderType: Text.NativeRendering
                 anchors.centerIn: parent
                 text: root.dndActive ? root.bellSlashGlyph : root.bellGlyph
@@ -392,6 +406,42 @@ Text {
                 color: IslandMotion.textPrimary
                 scale: notificationMouse.pressed ? 0.82 : 1.0
                 Behavior on scale { NumberAnimation { duration: IslandMotion.micro; easing.type: IslandMotion.easeOut } }
+
+                // One-shot wobble played when a new notification arrives
+                // (see root.onNotificationPulseToggleChanged). Never runs
+                // while DND is active.
+                SequentialAnimation {
+                    id: bellWobble
+                    NumberAnimation { target: bellText; property: "rotation"; to: 16; duration: 70; easing.type: Easing.OutQuad }
+                    NumberAnimation { target: bellText; property: "rotation"; to: -14; duration: 100; easing.type: Easing.InOutQuad }
+                    NumberAnimation { target: bellText; property: "rotation"; to: 8; duration: 90; easing.type: Easing.InOutQuad }
+                    NumberAnimation { target: bellText; property: "rotation"; to: 0; duration: 90; easing.type: Easing.OutQuad }
+                }
+            }
+
+            // ── Unseen-count badge -- red, bold count, top-right of the bell ──
+            Rectangle {
+                id: unseenBadge
+                visible: root.unseenCount > 0
+                width: Math.max(14, badgeText.implicitWidth + 7)
+                height: 14
+                radius: height / 2
+                color: "#ff3b30"
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.topMargin: 2
+                anchors.rightMargin: -2
+
+                Text {
+                    id: badgeText
+                    renderType: Text.NativeRendering
+                    anchors.centerIn: parent
+                    text: root.unseenCount > 99 ? "99+" : String(root.unseenCount)
+                    color: "white"
+                    font.family: root.textFontFamily
+                    font.pixelSize: 9
+                    font.bold: true
+                }
             }
 
             MouseArea {

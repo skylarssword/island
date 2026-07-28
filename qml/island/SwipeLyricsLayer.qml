@@ -62,7 +62,7 @@ readonly property real textWidth: Math.max(0, width - horizontalPadding * 2 - ar
     readonly property real lyricX: centeredX - (1 - clampedProgress) * dragDistance
     readonly property real timeX: centeredX + clampedProgress * dragDistance
     readonly property real visibleLyricWidth: Math.min(textWidth, Math.max(0, lyricMetrics.advanceWidth))
-    readonly property real visibleTimeWidth: Math.min(textWidth, Math.max(0, timeMetrics.advanceWidth))
+readonly property real visibleTimeWidth: textWidth
     readonly property real timeRecordingDotX: Math.max(
         4,
         timeX + (textWidth - visibleTimeWidth) / 2 - recordingDotSpacing - timeRecordingIndicator.width
@@ -237,23 +237,46 @@ OpacityMask {
         wrapMode: Text.NoWrap
     }
 
+Column {
+    id: timeCluster
+    x: timeX
+    width: textWidth
+    anchors.verticalCenter: parent.verticalCenter
+    spacing: -6
+    opacity: 1 - clampedProgress
+
     Text {
         renderType: Text.NativeRendering
-        visible: timeText !== "" && showSecondaryText
-        x: timeX
-        width: textWidth
-        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width
         text: timeText
-        color: "white"
-        opacity: 1 - clampedProgress
-        font.pixelSize: textPixelSize + 1
+        color: IslandMotion.textPrimary
+        font.pixelSize: textPixelSize - 1
         font.family: timeFontFamily
         font.weight: Font.Bold
-        font.letterSpacing: -0.25
+        font.letterSpacing: -0.35
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
         wrapMode: Text.NoWrap
     }
+
+    Text {
+        renderType: Text.NativeRendering
+        width: parent.width
+        text: Qt.formatDate(new Date(), "ddd, MMM d")
+        color: IslandMotion.textFaint
+        font.pixelSize: Math.max(11, textPixelSize * 0.42)
+        font.family: textFontFamily
+        font.weight: Font.Bold
+        font.letterSpacing: 0.2
+        horizontalAlignment: Text.AlignHCenter
+        elide: Text.ElideRight
+        wrapMode: Text.NoWrap
+
+        transform: Translate {
+            y: -3
+        }
+    }
+}
 
     RecordingIndicator {
         id: timeRecordingIndicator

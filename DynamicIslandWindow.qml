@@ -2546,9 +2546,7 @@ idleMode: root.idleMode
                     PowerMenuLayer {
                         iconFontFamily: root.iconFontFamily
                         textFontFamily: root.textFontFamily
-                        dndActive: islandContainer.dndActive
                         showCondition: islandContainer.powerMenuLayerVisible
-                        onDndToggleRequested: islandContainer.toggleDnd()
                         onOpenControlCenterRequested: islandContainer.showControlCenter()
                         onCloseRequested: islandContainer.smartRestoreState()
                     }

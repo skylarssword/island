@@ -40,7 +40,7 @@ Item {
     property real iconVerticalOffset: 1
     property int recordingDotSpacing: 12
     readonly property string chargingIconGlyph: "\uf0e7"
-
+property string currentDateLabel: Qt.formatDate(new Date(), "ddd, MMM d")
     readonly property real clampedProgress: Math.max(0, Math.min(1, -transitionProgress))
     readonly property real textWidth: Math.max(0, width - horizontalPadding * 2)
     readonly property real centeredTimeX: horizontalPadding
@@ -52,7 +52,7 @@ Item {
     readonly property real dragDistance: Math.max(timeExitDistance, itemsEntryDistance)
     readonly property real itemsX: centeredItemsX + (1 - clampedProgress) * dragDistance
     readonly property real timeX: centeredTimeX - clampedProgress * dragDistance
-    readonly property real visibleTimeWidth: Math.min(textWidth, Math.max(0, timeMetrics.advanceWidth))
+readonly property real visibleTimeWidth: timeCluster.width
     readonly property real timeRecordingDotX: Math.max(
         4,
         timeX + (textWidth - visibleTimeWidth) / 2 - recordingDotSpacing - timeRecordingIndicator.width
@@ -401,21 +401,44 @@ Row {
         anchors.verticalCenter: parent.verticalCenter
     }
 
+Column {
+    id: timeCluster
+    x: timeX
+    width: textWidth
+    anchors.verticalCenter: parent.verticalCenter
+    spacing: -6
+    opacity: 1 - clampedProgress
+
     Text {
         renderType: Text.NativeRendering
-        visible: timeText !== "" && showSecondaryText
-        x: timeX
-        width: textWidth
-        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width
         text: timeText
-        color: "white"
-        opacity: 1 - clampedProgress
-        font.pixelSize: root.textPixelSize + 1
+        color: IslandMotion.textPrimary
+        font.pixelSize: textPixelSize - 1
         font.family: timeFontFamily
         font.weight: Font.Bold
-        font.letterSpacing: -0.25
+        font.letterSpacing: -0.35
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
         wrapMode: Text.NoWrap
     }
+
+    Text {
+        renderType: Text.NativeRendering
+        width: parent.width
+        text: Qt.formatDate(new Date(), "ddd, MMM d")
+        color: IslandMotion.textFaint
+        font.pixelSize: Math.max(11, textPixelSize * 0.42)
+        font.family: textFontFamily
+        font.weight: Font.Bold
+        font.letterSpacing: 0.2
+        horizontalAlignment: Text.AlignHCenter
+        elide: Text.ElideRight
+        wrapMode: Text.NoWrap
+
+        transform: Translate {
+            y: -3
+        }
+    }
+}
 }
