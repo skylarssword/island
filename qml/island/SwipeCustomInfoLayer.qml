@@ -427,7 +427,7 @@ Column {
         renderType: Text.NativeRendering
         width: parent.width
         text: Qt.formatDate(new Date(), "ddd, MMM d")
-        color: IslandMotion.textFaint
+        color: IslandMotion.textSecondary
         font.pixelSize: Math.max(11, textPixelSize * 0.42)
         font.family: textFontFamily
         font.weight: Font.Bold

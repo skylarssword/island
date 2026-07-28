@@ -10,10 +10,10 @@ QtObject {
     // Bumped up from the first pass: the initial values (120/200/320/440/600)
     // read as too snappy/rushed once seen live. These sit closer to mugen's
     // actual feel while keeping the OutExpo/spring easings for polish.
-    readonly property int micro:    160   // hover tints, icon swaps
-    readonly property int fast:     260   // button press, small reveals
-    readonly property int standard: 420   // capsule morph
-    readonly property int gentle:   560   // content cross-fades
+    readonly property int micro:    360   // hover tints, icon swaps
+    readonly property int fast:     420   // button press, small reveals
+    readonly property int standard: 500   // capsule morph
+    readonly property int gentle:   650   // content cross-fades
     readonly property int slow:     760   // panel slides, large reshapes
 
     // ---- easing vocabulary ---------------------------------------------

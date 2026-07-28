@@ -679,6 +679,8 @@ property string notificationAppName: ""
         property var bluetoothExpandedDevice: null
 property var notificationHistory: []
         property int notificationHistoryCounter: 0
+property int unseenNotificationCount: 0
+        property bool notificationPulseToggle: false
 property bool dndActive: false
 property int mediaWorkspaceId: -1
 
@@ -1205,7 +1207,12 @@ Keys.onPressed: (event) => {
         }
 
         function advanceSideSwipeProgress(currentProgress, deltaX) {
-            const minProgress = hasCustomLeftItems ? -1 : 0;
+            // Always allow the live drag preview to move in both
+            // directions -- sideSwipeDragDistanceForDirection() already
+            // provides a fallback distance when no custom left items are
+            // configured, so gating minProgress on hasCustomLeftItems just
+            // killed the entire left-swipe direction for no reason.
+            const minProgress = -1;
             let nextProgress = Math.max(minProgress, Math.min(1, currentProgress));
             let remainingDelta = deltaX;
 
@@ -1365,6 +1372,9 @@ const entry = {
                 updated.length = 20;
             notificationHistory = updated;
             queueNotificationIconLookup(entry.id, entry.appName);
+
+            unseenNotificationCount++;
+            notificationPulseToggle = !notificationPulseToggle;
         }
 
 function clearNotificationHistory() {
@@ -1505,6 +1515,8 @@ function toggleDnd() {
         }
 
         function smartRestoreState() {
+            if (islandState === "notification_center")
+                unseenNotificationCount = 0;
             restoreRestingCapsule();
         }
 
@@ -1564,6 +1576,7 @@ function toggleDnd() {
             islandState = "notification_center";
             mainCapsule.displayedWidth = mainCapsule.baseTargetWidth;
             stopAutoHideTimer();
+            unseenNotificationCount = 0;
         }
 
 function showSearch() {
@@ -2547,7 +2560,7 @@ idleMode: root.idleMode
                         iconFontFamily: root.iconFontFamily
                         textFontFamily: root.textFontFamily
                         showCondition: islandContainer.powerMenuLayerVisible
-                        onOpenControlCenterRequested: islandContainer.showControlCenter()
+                            onOpenControlCenterRequested: islandContainer.showControlCenter()
                         onCloseRequested: islandContainer.smartRestoreState()
                     }
                 }
@@ -2684,6 +2697,8 @@ SystrayBubble {
             iconFontFamily: root.iconFontFamily
             textFontFamily: root.textFontFamily
             dndActive: islandContainer.dndActive
+            unseenCount: islandContainer.unseenNotificationCount
+            notificationPulseToggle: islandContainer.notificationPulseToggle
             onDndToggleRequested: islandContainer.toggleDnd()
             onNotificationCenterRequested: {
                 if (islandContainer.islandState === "notification_center") islandContainer.smartRestoreState()

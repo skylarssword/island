@@ -112,6 +112,9 @@ Item {
             clip: true
             visible: root.notificationHistory.length > 0
             model: root.notificationHistory.length
+            boundsBehavior: Flickable.StopAtBounds
+            flickDeceleration: 3000
+            maximumFlickVelocity: 2400
 
             delegate: Item {
                 id: notifRow
@@ -121,7 +124,9 @@ Item {
                 readonly property bool hasBody: (entry.body || "") !== "" && entry.body !== entry.summary
                 width: ListView.view.width
                 height: isExpanded ? (hasBody ? 92 : 64) : 56
-                clip: true
+                // No clip here — clipping at the row level leaves the row's
+                // own (transparent) background exposed as black when the card
+                // slides. Each child clips itself instead.
 
                 // Drag offset for swipe-left-to-dismiss. Disabled while
                 // actively dragging so the finger tracks 1:1; springs
@@ -133,14 +138,14 @@ Item {
                 readonly property real dismissThreshold: -56
 
                 Behavior on height {
-                    NumberAnimation { duration: 170; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 220; easing.type: Easing.OutQuart }
                 }
 
                 Behavior on dragX {
                     enabled: !notifRow.dragging
                     NumberAnimation {
-                        duration: 180
-                        easing.type: Easing.OutCubic
+                        duration: 260
+                        easing.type: Easing.OutQuart
                         onRunningChanged: {
                             if (!running && notifRow.pendingDismiss) {
                                 notifRow.pendingDismiss = false;
@@ -162,10 +167,17 @@ Item {
                 }
 
                 // ── Dismiss affordance revealed underneath as the card
-                // slides left ─────────────────────────────────────────
+                // slides left. Anchored to the right edge only so it
+                // never peeks out on the left side of the card.
                 Rectangle {
-                    anchors.fill: parent
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    // Only as wide as the revealed gap so it never shows
+                    // on the left side of the sliding card.
+                    width: Math.max(0, -notifRow.dragX)
                     radius: 12
+                    clip: true
                     color: StyleTokens.danger
                     visible: notifRow.dragX < -4
 
@@ -183,17 +195,24 @@ Item {
                 }
 
                 // ── Foreground card -- the part that actually slides ───
+                // NOTE: Must NOT use anchors here — anchors override `x`,
+                // so the dragX binding would have no visual effect.
                 Rectangle {
                     id: notifCard
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
                     x: notifRow.dragX
+                    y: 0
+                    width: parent.width
+                    height: parent.height
                     radius: 12
                     clip: true
+
                     color: notifCardMouse.containsMouse || notifRow.isExpanded
-                           ? StyleTokens.moduleHover : StyleTokens.module
+                           ? Qt.rgba(0,0,0,0.35)
+                           : Qt.rgba(0,0,0,0.15)
+
+                    border.width: IslandMotion.surfaceBorderWidth
+                    border.color: IslandMotion.surfaceBorderColor
+
                     Behavior on color { ColorAnimation { duration: StyleTokens.durationFast } }
 
                     Item {
