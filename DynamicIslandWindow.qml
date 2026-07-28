@@ -780,7 +780,7 @@ property bool expandedByPlayerAutoOpen: false
                     || (islandState === "normal" && swipeTransitionProgress < 0)
                     || (islandState === "split" && splitOriginSide === "left")
                     || (islandState === "long_capsule"
-                        && (workspaceOriginSide === "left" || swipeTransitionProgress < 0))
+                        && workspaceOriginSide === "left")
                 )
             )
         readonly property bool lyricsSwipeVisible: !root.overviewVisible && (
@@ -791,7 +791,7 @@ property bool expandedByPlayerAutoOpen: false
                 || (islandState === "normal" && swipeTransitionProgress >= 0)
                 || (islandState === "split" && splitOriginSide === "right")
                 || (islandState === "long_capsule"
-                    && (workspaceOriginSide === "right" || swipeTransitionProgress > 0))
+                    && workspaceOriginSide === "right")
             )
         )
         readonly property bool expandedLayerVisible: !root.overviewVisible && islandState === "expanded"
