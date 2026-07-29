@@ -11,7 +11,6 @@ import "qml/connectivity"
 import "qml/island"
 import "qml/workspace"
 import "qml/shared"
-// IslandMotion (singleton, qml/shared) provides motion tokens used below
 
 PanelWindow {
     id: root
@@ -82,7 +81,6 @@ readonly property color capsuleWalColor: (capsuleWalColorIndex >= 0 && capsuleWa
         : "#000000"
     property bool appearanceSettingsLoaded: false
 
-    // CapsuleStartup
 onCapsuleOpacityChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTimer.restart()
     onCapsuleUseWalColorChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTimer.restart()
     onCapsuleWalColorIndexChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTimer.restart()
@@ -110,8 +108,6 @@ IpcHandler {
     color: StyleTokens.transparent
     anchors { top: true; left: true; right: true }
     mask: Region {
-        // Input is the union of the island's visible surfaces plus a compact top
-        // gesture strip. The gesture strip must not grow with expanded content.
         Region {
             x: 0
             y: 0
@@ -143,7 +139,6 @@ Region {
             height: root.bubblesEnabled ? Math.ceil(systrayBubble.height) : 0
         }
 
-        // Add existing detail shells
         Region {
             intersection: Intersection.Combine
             x: Math.floor(wifiConnectivityDetailShell.x)
@@ -167,10 +162,6 @@ Region {
             width: screenshotDetailShell.visible ? Math.ceil(screenshotDetailShell.width) : 0
             height: screenshotDetailShell.visible ? Math.ceil(screenshotDetailShell.height) : 0
         }
-        // NOTE: the old "searchResultsShell" mask Region was removed here.
-        // Search results now render INSIDE mainCapsule itself (no separate
-        // floating box below it), so mainCapsule's own Region above already
-        // covers the full expanded search/wallpaper capsule area.
     }
 implicitHeight: Math.max(
         root.overviewVisible ? Math.ceil(4 + root.overviewCapsuleHeight + 8) : 0,
@@ -239,7 +230,7 @@ if (controlCenterLoader.item && controlCenterLoader.item.powerMenuOpen)
         return 4 + 320 + root.controlCenterMaximumExtraHeight + 12
     }
     readonly property real connectivityDetailGap: 16
-    readonly property int connectivityDetailAnimationDuration: IslandMotion.standard   // was 360
+    readonly property int connectivityDetailAnimationDuration: IslandMotion.standard
     readonly property string overviewWallpaperSource: overviewWallpaperCache.effectiveSource
 
     function beginOverviewOpening() {
@@ -550,10 +541,6 @@ Timer {
         }
     }
 
-    // ── Gamemode: polled here (root always exists) instead of inside
-    // ControlCenterLayer (a Loader that unmounts when the panel is closed),
-    // so keyboard-triggered toggles are picked up immediately regardless
-    // of whether the control center panel is open.
     function toggleGamemode() {
         root.gamemodeActive = !root.gamemodeActive
         gamemodeToggleExec.running = true
@@ -589,8 +576,6 @@ Timer {
         }
     }
 
-    // ── Appearance settings persistence (opacity + pywal color choice).
-    // Gamemode is intentionally excluded — it's meant to reset each boot.
     Process {
         id: appearanceSettingsLoader
         property string _buf: ""
@@ -653,7 +638,6 @@ lyricsExpandedView: root.lyricsExpandedView,
 
     Component.onCompleted: appearanceSettingsLoader.running = true
 
-    // --- 灵动岛主容器与全局状态 ---
     FocusScope {
         id: islandContainer
         anchors.fill: parent
@@ -728,7 +712,6 @@ property int mediaWorkspaceId: -1
                     }
                 }
             } catch (e) {
-                // hyprctl output not ready / malformed this cycle — keep last known value
             }
             mediaWorkspaceId = -1
         }
@@ -749,7 +732,7 @@ property bool expandedByPlayerAutoOpen: false
         readonly property int defaultAutoHideInterval: 1250
         readonly property int notificationAutoHideInterval: 4200
         readonly property int bluetoothExpandedAutoHideInterval: 2500
-        readonly property int swipeAnimationDuration: IslandMotion.fast   // was 220
+        readonly property int swipeAnimationDuration: IslandMotion.fast
        readonly property bool blocksTransientSplit: islandState === "expanded"
             || islandState === "bluetooth_expanded"
             || islandState === "control_center"
@@ -921,7 +904,6 @@ Keys.onPressed: (event) => {
             }
             if (!root.overviewVisible) return;
 
-            // ── Tab (original behaviour) ───────────────────────────────────
             if ((event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier)) || event.key === Qt.Key_Backtab) {
                 hyprDispatch.focusWorkspace("r-1");
                 event.accepted = true;
@@ -933,14 +915,12 @@ Keys.onPressed: (event) => {
                 return;
             }
 
-            // ── Close overview ─────────────────────────────────────────────
             if (event.key === Qt.Key_Escape || event.key === Qt.Key_Return) {
                 root.closeOverviewEverywhere();
                 event.accepted = true;
                 return;
             }
 
-            // ── Workspace navigation helpers ───────────────────────────────
             const ov = islandContainer.overviewView;
             const rows    = ov ? ov.rows    : 2;
             const columns = ov ? ov.columns : 5;
@@ -951,7 +931,6 @@ Keys.onPressed: (event) => {
             const minId  = group * wpg + 1;
             const maxId  = minId + wpg - 1;
 
-            // ── Arrow / vim keys ───────────────────────────────────────────
             if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
                 let t = curId - 1; if (t < minId) t = maxId;
                 hyprDispatch.focusWorkspace(t);
@@ -973,7 +952,6 @@ Keys.onPressed: (event) => {
                 event.accepted = true; return;
             }
 
-            // ── Number keys 1-9 (0 = 10th) ────────────────────────────────
             if (event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
                 const pos = event.key - Qt.Key_0;
                 if (pos <= wpg) { hyprDispatch.focusWorkspace(minId + pos - 1); event.accepted = true; }
@@ -986,7 +964,6 @@ Keys.onPressed: (event) => {
         }
 
         function handleConfiguredClickAction(actionName) {
-            // On the lyrics page, secondary click opens the lyrics control center
             if ((actionName === "toggleControlCenter" || actionName === "openControlCenter")
                     && (islandState === "lyrics" || restingState === "lyrics")) {
                 if (islandState === "lyrics_control_center")
@@ -996,7 +973,6 @@ Keys.onPressed: (event) => {
                 return
             }
 
-            // On the expanded player, secondary click opens the equalizer
             if ((actionName === "toggleControlCenter" || actionName === "openControlCenter")
                     && (islandState === "expanded" || islandState === "equalizer")) {
                 if (islandState === "equalizer")
@@ -1207,11 +1183,6 @@ Keys.onPressed: (event) => {
         }
 
         function advanceSideSwipeProgress(currentProgress, deltaX) {
-            // Always allow the live drag preview to move in both
-            // directions -- sideSwipeDragDistanceForDirection() already
-            // provides a fallback distance when no custom left items are
-            // configured, so gating minProgress on hasCustomLeftItems just
-            // killed the entire left-swipe direction for no reason.
             const minProgress = -1;
             let nextProgress = Math.max(minProgress, Math.min(1, currentProgress));
             let remainingDelta = deltaX;
@@ -1396,9 +1367,31 @@ function clearNotificationHistory() {
             notifIconLookup.pendingEntryId = item.id;
             const needle = item.name.toLowerCase().replace(/'/g, "");
             notifIconLookup.command = ["bash", "-c",
+                "n='" + needle + "'; " +
                 "f=\"$HOME/.cache/quickshell/dock-apps-v2.tsv\"; " +
-                "[ -f \"$f\" ] && awk -F'\\t' -v n='" + needle + "' " +
-                "'{ ln=tolower($1); if (index(ln, n) > 0 && $3 != \"\") { print $3; exit } }' \"$f\" || true"
+                "if [ -f \"$f\" ]; then " +
+                  "r=$(awk -F'\\t' -v n=\"$n\" '{ ln=tolower($1); if (index(ln, n) > 0 && $3 != \"\") { print $3; exit } }' \"$f\"); " +
+                  "[ -n \"$r\" ] && echo \"$r\" && exit 0; " +
+                "fi; " +
+                "icon=$(find /usr/share/icons /usr/share/pixmaps $HOME/.local/share/icons $HOME/.local/share/pixmaps 2>/dev/null " +
+                  "-type f \\( -name \"${n}.png\" -o -name \"${n}.svg\" -o -name \"${n}.xpm\" \\) " +
+                  "| grep -i '48x48\\|scalable\\|256x256\\|128x128' | head -1); " +
+                "[ -z \"$icon\" ] && " +
+                  "icon=$(find /usr/share/icons /usr/share/pixmaps $HOME/.local/share/icons $HOME/.local/share/pixmaps 2>/dev/null " +
+                  "-type f \\( -name \"${n}.png\" -o -name \"${n}.svg\" \\) | head -1); " +
+                "[ -n \"$icon\" ] && echo \"$icon\" && exit 0; " +
+                "desktop=$(grep -ril \"^Name=.*${n}\\|^Exec=.*${n}\" /usr/share/applications $HOME/.local/share/applications 2>/dev/null | head -1); " +
+                "if [ -n \"$desktop\" ]; then " +
+                  "iname=$(grep -m1 '^Icon=' \"$desktop\" | cut -d= -f2); " +
+                  "[ -n \"$iname\" ] && [ -f \"$iname\" ] && echo \"$iname\" && exit 0; " +
+                  "r=$(find /usr/share/icons /usr/share/pixmaps $HOME/.local/share/icons 2>/dev/null " +
+                    "-type f \\( -name \"${iname}.png\" -o -name \"${iname}.svg\" \\) " +
+                    "| grep -i '48x48\\|scalable\\|256x256' | head -1); " +
+                  "[ -z \"$r\" ] && " +
+                    "r=$(find /usr/share/icons /usr/share/pixmaps $HOME/.local/share/icons 2>/dev/null " +
+                    "-type f \\( -name \"${iname}.png\" -o -name \"${iname}.svg\" \\) | head -1); " +
+                  "[ -n \"$r\" ] && echo \"$r\"; " +
+                "fi"
             ];
             notifIconLookup.running = true;
         }
@@ -1467,9 +1460,6 @@ function toggleDnd() {
         }
 
         function openNotificationHistory() {
-            // Was routing into ControlCenterLayer's baked-in notification
-            // panel (the OLD history UI). Popup taps should land on the
-            // NEW standalone NotificationCenterLayer instead.
             showNotificationCenter();
         }
 
@@ -1673,8 +1663,6 @@ function showSearch() {
             restartAutoHideTimer();
         }
 
-
-
 Timer { id: autoHideTimer; interval: islandContainer.defaultAutoHideInterval; onTriggered: islandContainer.smartRestoreState() }
         Timer {
             id: osdProgressAnimationReset
@@ -1722,14 +1710,11 @@ Timer { id: autoHideTimer; interval: islandContainer.defaultAutoHideInterval; on
             }
         }
 
-        // --- UI 渲染：灵动岛主干 ---
        Rectangle {
 id: mainCapsule
                 z: 5
-                property int morphDuration: IslandMotion.standard   // was 400
+                property int morphDuration: IslandMotion.standard
                 readonly property int infoActiveTab: infoLoader.item ? infoLoader.item.activeTab : 0
-            // Always-on thin hairline border (mugen-style), 1px, soft low-alpha tone.
-            // Overview mode swaps in its own accent border color on top of this.
             property real outlineWidth: IslandMotion.surfaceBorderWidth
             property color outlineColor: root.overviewContentVisible ? root.overviewCapsuleBorderColor : IslandMotion.surfaceBorderColor
             property real displayedWidth: baseTargetWidth
@@ -1793,9 +1778,6 @@ default:
 case "capturing":
                     return 38;
                 case "search":
-                    // NOTE: was a fixed 38. The search capsule now grows in place
-                    // to fit either the app-search grid or the wallpaper hub
-                    // content, both reported up via SearchPillLayer.capsuleHeight.
                     return searchLoader.item ? searchLoader.item.capsuleHeight : 38;
 case "control_center":
                     if (controlCenterLoader.item && controlCenterLoader.item.powerMenuOpen)
@@ -1934,7 +1916,6 @@ Behavior on radius { NumberAnimation { duration: mainCapsule.morphDuration; easi
                     }
                 }
             }
-
 
 MouseArea {
                 id: capsuleMouseArea
@@ -2175,8 +2156,6 @@ if (islandContainer.islandState === "info") {
                 }
             }
 
-
-
             Loader {
                 id: customSwipeLoader
                 anchors.fill: parent
@@ -2400,20 +2379,9 @@ Loader {
                     }
                 }
             }
-// ── Search pill content ────────────────────────────────────────
-// NOTE: searchResultsShell (the separate floating box for app grid /
-// WallpaperHub) has been removed entirely. SearchPillLayer now renders
-// its own results (and swaps in WallpaperHub) internally and reports
-// both capsuleWidth and capsuleHeight up to this Loader, which mainCapsule
-// reads directly above in baseTargetWidth / targetHeight.
 Loader {
                 id: searchLoader
                 anchors.fill: parent
-                // Was `active: islandContainer.searchLayerVisible`, which destroyed
-                // and recreated SearchPillLayer every time search opened -- forcing
-                // a full app-list reload from disk each time (the visible "refresh"
-                // on entry). Now stays mounted like notificationLoader/infoLoader;
-                // only visibility toggles, so the app cache loads once and persists.
                 active: true
                 asynchronous: false
                 visible: islandContainer.searchLayerVisible
@@ -2441,8 +2409,6 @@ onLaunchRequested: function(exec, isCmd) {
                     }
                 }
             }
-
-
 
             Loader {
                 id: capturingLoader
@@ -2642,7 +2608,6 @@ sourceComponent: Component {
                     }
                 }
 
-                // ── Mouse scroll to change workspace while overview is open ──
                 WheelHandler {
                     enabled: root.overviewVisible
                     acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
@@ -2656,7 +2621,6 @@ sourceComponent: Component {
                         const group = Math.floor((curId - 1) / wpg);
                         const minId = group * wpg + 1;
                         const maxId = minId + wpg - 1;
-                        // scroll down / right → next workspace
                         const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : -event.angleDelta.x;
                         let t = delta < 0 ? curId + 1 : curId - 1;
                         if (t > maxId) t = minId;
@@ -2668,7 +2632,6 @@ sourceComponent: Component {
 
 }
 
-// ── Left satellite: workspace bubble ───────────────────────────────
 WorkspaceBubble {
             id: workspaceBubble
             x: 16
@@ -2686,7 +2649,6 @@ WorkspaceBubble {
             onDotClicked: function(workspaceId) { hyprDispatch.focusWorkspace(workspaceId) }
         }
 
-        // ── Right satellite: systray bubble ────────────────────────────────
 SystrayBubble {
             id: systrayBubble
             x: root.width - width - 16
@@ -2713,11 +2675,6 @@ SystrayBubble {
             Behavior on opacity { NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeOut } }
         }
 
-// ── DND indicator bubble — detached, follows mainCapsule's right
-        // edge. Only shown when the satellite bubbles are hidden and on
-        // resting/idle states; hidden the instant any expanded panel opens.
-        // Non-interactive, so no mask entry needed — it simply sits outside
-        // the input region and clicks pass through to the desktop behind it.
 Item {
             id: dndBubble
             readonly property bool shouldShow: !root.bubblesEnabled && islandContainer.dndBubbleVisible
@@ -2741,10 +2698,6 @@ readonly property int bubbleSize: 26
 
             onShouldShowChanged: {
                 if (shouldShow) {
-                    // Only start revealing once the capsule has actually
-                    // settled on a resting state for a moment — avoids a
-                    // flash/fade when we're only briefly passing through
-                    // an eligible state on the way to an expanded panel.
                     dndBubbleShowDelayTimer.restart();
                 } else {
                     dndBubbleShowDelayTimer.stop();
@@ -2836,15 +2789,12 @@ readonly property int bubbleSize: 26
             heroFontFamily: root.heroFontFamily
         }
         
-        
- // ── Screenshot detail panel ────────────────────────────────────────
         Item {
             id: screenshotDetailShell
             visible: root.screenshotDetailMounted
             width: root.connectivityDetailWidth
             height: root.connectivityDetailHeight
 
-            // Position to the right of capsule
             x: mainCapsule.x + mainCapsule.width + root.connectivityDetailGap
             y: mainCapsule.y
 
@@ -2867,14 +2817,12 @@ readonly property int bubbleSize: 26
                 border.color: Qt.rgba(1,1,1,0.12)
                 border.width: 1
 
-                // ── Screenshot panel content ───────────────────────────────
                 ScreenshotDetailPanel {
                     anchors.fill: parent
                     anchors.margins: 16
                     iconFontFamily: root.iconFontFamily
                     textFontFamily: root.textFontFamily
                     onCaptureRequested: function(mode, delay) {
-                        // Close panel, shrink capsule, wait 1s min then shoot
                         root.screenshotDetailOpen = false
                         screenshotDetailCleanupTimer.restart()
                         islandContainer.showCapturing(
@@ -2972,10 +2920,6 @@ IslandRootGestureArea {
         capsule: mainCapsule
     }
 
-    // ── Idle overlay — standalone panel, only visible while idleMode is
-    // on. Declared here (not in shell.qml) so it gets direct access to
-    // this screen's islandContainer state without matching across
-    // separate Variants instances.
     IdleOverlayWindow {
         screen: root.screen
         hyprMonitor: root.hyprMonitor
