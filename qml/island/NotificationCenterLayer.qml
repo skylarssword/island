@@ -2,12 +2,6 @@ import QtQuick
 import IslandBackend
 import "../shared"
 
-// Notification center island state -- "Notifications" title, a small
-// bell badge top-right, and either "No notifications" or the history
-// list. Rendered inside the capsule like every other layer.
-// to dismiss just that one entry. Ported from the same interaction
-// pattern ControlCenterLayer's older baked-in notification panel used,
-// plus a per-entry app icon that was missing here.
 Item {
     id: root
 
@@ -17,7 +11,6 @@ Item {
     property bool showCondition: true
     property int expandedIndex: -1
 
-    // Read by mainCapsule's height switch (case "notification_center")
     readonly property int contentHeight: 92 + Math.max(1, notificationHistory.length) * 64
 
     signal clearRequested()
@@ -58,19 +51,23 @@ Item {
             anchors.left: parent.left
         }
 
-        // Bell badge, top-right -- green when there's history, matching
-        // the mockup's small circular badge.
         Rectangle {
             anchors.top: parent.top
             anchors.right: parent.right
             width: 30; height: 30; radius: 15
-            color: root.notificationHistory.length > 0
-                ? StyleTokens.success
-                : StyleTokens.module
-            border.width: IslandMotion.surfaceBorderWidth
-            border.color: IslandMotion.surfaceBorderColor
+            color: bellMouse.pressed
+                   ? Qt.rgba(0.85, 0.15, 0.15, 0.30)
+                   : (bellMouse.containsMouse ? Qt.rgba(1,1,1,0.12) : Qt.rgba(1,1,1,0.08))
+            border.width: 1
+            border.color: bellMouse.pressed
+                          ? Qt.rgba(1, 0.3, 0.3, 0.7)
+                          : (bellMouse.containsMouse ? Qt.rgba(1,1,1,0.4) : Qt.rgba(1,1,1,0.2))
 
-            Behavior on color { ColorAnimation { duration: StyleTokens.durationFast } }
+            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on border.color { ColorAnimation { duration: 120 } }
+
+            scale: bellMouse.pressed ? 0.90 : 1.0
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutBack } }
 
             Text {
                 renderType: Text.NativeRendering
@@ -78,16 +75,19 @@ Item {
                 text: "\uf0f3"
                 font.family: root.iconFontFamily
                 font.pixelSize: 14
-                color: StyleTokens.white
+                color: bellMouse.pressed ? Qt.rgba(1, 0.4, 0.4, 0.95) : StyleTokens.white
+                Behavior on color { ColorAnimation { duration: 120 } }
             }
 
             MouseArea {
+                id: bellMouse
                 anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
                 onClicked: root.clearRequested()
             }
         }
 
-        // ── Empty state ──────────────────────────────────────────────
         Text {
             renderType: Text.NativeRendering
             anchors.centerIn: parent
@@ -98,7 +98,6 @@ Item {
             visible: root.notificationHistory.length === 0
         }
 
-        // ── History list ─────────────────────────────────────────────
         ListView {
             id: notifCenterListView
             anchors.top: titleText.bottom
@@ -122,13 +121,7 @@ Item {
                 readonly property bool hasBody: (entry.body || "") !== "" && entry.body !== entry.summary
                 width: ListView.view.width
                 height: isExpanded ? (hasBody ? 92 : 64) : 56
-                // No clip here — clipping at the row level leaves the row's
-                // own (transparent) background exposed as black when the card
-                // slides. Each child clips itself instead.
 
-                // Drag offset for swipe-left-to-dismiss. Disabled while
-                // actively dragging so the finger tracks 1:1; springs
-                // back (or flings out) once released.
                 property real dragX: 0
                 property bool dragging: false
                 property bool pendingDismiss: false
@@ -164,15 +157,10 @@ Item {
                     return Math.floor(hrs / 24) + "d ago"
                 }
 
-                // ── Dismiss affordance revealed underneath as the card
-                // slides left. Anchored to the right edge only so it
-                // never peeks out on the left side of the card.
                 Rectangle {
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
-                    // Only as wide as the revealed gap so it never shows
-                    // on the left side of the sliding card.
                     width: Math.max(0, -notifRow.dragX)
                     radius: 12
                     clip: true
@@ -192,9 +180,6 @@ Item {
                     }
                 }
 
-                // ── Foreground card -- the part that actually slides ───
-                // NOTE: Must NOT use anchors here — anchors override `x`,
-                // so the dragX binding would have no visual effect.
                 Rectangle {
                     id: notifCard
                     x: notifRow.dragX
@@ -204,9 +189,9 @@ Item {
                     radius: 12
                     clip: true
 
-		color: notifCardMouse.containsMouse || notifRow.isExpanded
-    		   ? Qt.rgba(1,1,1,0.09)
-    		   : Qt.rgba(1,1,1,0.05)
+                    color: notifCardMouse.containsMouse || notifRow.isExpanded
+       			? Qt.rgba(1,1,1,0.09)
+     			  : Qt.rgba(1,1,1,0.05)
 
                     border.width: IslandMotion.surfaceBorderWidth
                     border.color: IslandMotion.surfaceBorderColor
@@ -315,7 +300,7 @@ Item {
                         onPositionChanged: function(mouse) {
                             if (!pressed) return;
                             let delta = mouse.x - pressX;
-                            if (delta > 0) delta = 0; // only swipe left
+                            if (delta > 0) delta = 0;
                             if (!moved && Math.abs(delta) > 4) moved = true;
                             if (moved) notifRow.dragX = Math.max(notifRow.maxSwipe, delta);
                         }
@@ -333,7 +318,6 @@ Item {
                                 return;
                             }
 
-                            // A plain tap (no meaningful drag) toggles expansion.
                             root.expandedIndex = notifRow.isExpanded ? -1 : index;
                         }
 

@@ -98,9 +98,7 @@ IpcHandler {
             if (islandContainer.islandState === "search") {
                 islandContainer.smartRestoreState()
             } else {
-                root.visible = false
                 islandContainer.showSearch()
-                root.visible = true
             }
         }
     }
@@ -423,10 +421,21 @@ Timer {
         interval: 150
         repeat: false
         onTriggered: {
+            searchKeyboardNudge.restart()
             if (searchLoader.item) {
                 searchLoader.item.forceActiveFocus()
                 searchLoader.item.focusInput()
             }
+        }
+    }
+
+    Timer {
+        id: searchKeyboardNudge
+        interval: 32
+        repeat: false
+        onTriggered: {
+            root.WlrLayershell.keyboardFocus = WlrKeyboardFocus.None
+            root.WlrLayershell.keyboardFocus = WlrKeyboardFocus.Exclusive
         }
     }
 
