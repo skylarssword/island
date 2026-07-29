@@ -1353,12 +1353,14 @@ const entry = {
             notificationHistory = updated;
             queueNotificationIconLookup(entry.id, entry.appName);
 
-            unseenNotificationCount++;
+            if (islandState !== "notification_center")
+                unseenNotificationCount++;
             notificationPulseToggle = !notificationPulseToggle;
         }
 
 function clearNotificationHistory() {
             notificationHistory = [];
+            unseenNotificationCount = 0;
         }
 
         property var _notifIconQueue: []
@@ -1476,6 +1478,8 @@ function toggleDnd() {
             notificationHistory = notificationHistory.filter(function(e) {
                 return e.id !== entryId;
             });
+            if (unseenNotificationCount > 0)
+                unseenNotificationCount--;
         }
 
         function suppressCapsuleClick() {

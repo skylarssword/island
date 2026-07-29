@@ -1,4 +1,5 @@
 import QtQuick
+import QtMultimedia
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
@@ -99,11 +100,46 @@ Scope {
         onPressed: shellRoot.toggleOverviewAll()
     }
 
+    // ── Notification Sound ───────────────────────────────────────────────
+    // Single instance here so it fires once per notification regardless of
+    // how many monitors are connected. Mirrors the DND gate used by the
+    // bell-wobble in SystrayBubble.
+    property bool _dndActive: false
+
+    Process {
+        id: shellDndQuery
+        property string _buf: ""
+        command: ["bash", "-c", "swaync-client -D 2>/dev/null"]
+        stdout: SplitParser { onRead: shellDndQuery._buf += data }
+        onRunningChanged: {
+            if (!running) {
+                shellRoot._dndActive = shellDndQuery._buf.trim() === "true"
+                shellDndQuery._buf = ""
+            }
+        }
+    }
+
+    Timer {
+        interval: 3000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: shellDndQuery.running = true
+    }
+
+    SoundEffect {
+        id: notificationSound
+        source: Quickshell.shellDir + "/qml/shared/assets/sounds/notification.wav"
+        volume: IslandConfiguration.notificationSoundVolume / 100.0
+    }
+
     Connections {
         target: SystemServices
 
         function onNotificationReceived(appName, summary, body) {
             shellRoot.showNotificationAll(appName, summary, body);
+            if (IslandConfiguration.notificationSoundEnabled && !shellRoot._dndActive)
+                notificationSound.play();
         }
     }
 

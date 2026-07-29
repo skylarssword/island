@@ -1,4 +1,5 @@
 import QtQuick
+import QtMultimedia
 import Quickshell
 import Quickshell.Io
 import Quickshell._Window
@@ -23,8 +24,17 @@ Rectangle {
     property int unseenCount: 0
     property bool notificationPulseToggle: false
     onNotificationPulseToggleChanged: {
-        if (!root.dndActive)
+        if (!root.dndActive) {
             bellWobble.restart()
+            if (IslandConfiguration.notificationSoundEnabled)
+                notificationSound.play()
+        }
+    }
+
+    SoundEffect {
+        id: notificationSound
+        source: Quickshell.shellDir + "/qml/shared/assets/sounds/notification.mp3"
+        volume: IslandConfiguration.notificationSoundVolume / 100.0
     }
 
     property bool expanded: false

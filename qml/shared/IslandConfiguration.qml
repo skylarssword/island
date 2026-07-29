@@ -47,4 +47,13 @@ QtObject {
     readonly property string fontRegular: Qt.resolvedUrl("../../fonts/FlexRounded-R.ttf")
     readonly property string fontMedium:  Qt.resolvedUrl("../../fonts/FlexRounded-M.ttf")
     readonly property string fontBold:    Qt.resolvedUrl("../../fonts/FlexRounded-B.ttf")
+
+    // ── Notification Sound ───────────────────────────────────────────────
+    // Play a sound when a notification arrives (only fires when DND is off,
+    // mirroring the bell-wobble behaviour).
+    // Set to false to silence notification sounds entirely.
+    readonly property bool notificationSoundEnabled: true
+
+    // Playback volume from 0 (silent) to 100 (full volume).
+    readonly property int notificationSoundVolume: 90
 }
