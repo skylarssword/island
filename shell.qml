@@ -101,10 +101,9 @@ Scope {
     }
 
     // ── Notification Sound ───────────────────────────────────────────────
-    // Single instance here so it fires once per notification regardless of
-    // how many monitors are connected. Mirrors the DND gate used by the
-    // bell-wobble in SystrayBubble.
-    property bool _dndActive: false
+    // Query DND fresh on every notification so there's no stale cache
+    // window where DND is on but the old poll value says otherwise.
+    property bool _pendingSound: false
 
     Process {
         id: shellDndQuery
@@ -113,18 +112,13 @@ Scope {
         stdout: SplitParser { onRead: shellDndQuery._buf += data }
         onRunningChanged: {
             if (!running) {
-                shellRoot._dndActive = shellDndQuery._buf.trim() === "true"
+                const dnd = shellDndQuery._buf.trim() === "true"
                 shellDndQuery._buf = ""
+                if (shellRoot._pendingSound && !dnd)
+                    notificationSound.play()
+                shellRoot._pendingSound = false
             }
         }
-    }
-
-    Timer {
-        interval: 3000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: shellDndQuery.running = true
     }
 
     SoundEffect {
@@ -138,8 +132,10 @@ Scope {
 
         function onNotificationReceived(appName, summary, body) {
             shellRoot.showNotificationAll(appName, summary, body);
-            if (IslandConfiguration.notificationSoundEnabled && !shellRoot._dndActive)
-                notificationSound.play();
+            if (IslandConfiguration.notificationSoundEnabled) {
+                shellRoot._pendingSound = true
+                shellDndQuery.running = true
+            }
         }
     }
 

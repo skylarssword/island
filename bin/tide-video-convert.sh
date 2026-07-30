@@ -4,7 +4,7 @@
 # Reads paths from ~/.config/tide-island/video-convert.conf — do not
 # hardcode paths here. Run setup-video-converter.sh to generate that file.
 
-set -euo pipefail
+set -uo pipefail
 
 CONF="$HOME/.config/tide-island/video-convert.conf"
 
@@ -23,6 +23,18 @@ source "$CONF"
 
 mkdir -p "$DST" "$ARCHIVE"
 
+# notify-send needs a D-Bus session — find the running one.
+_notify() {
+    local summary="$1" body="$2" urgency="${3:-normal}"
+    if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+        local uid; uid="$(id -u)"
+        local bus
+        bus="$(ls /run/user/"$uid"/bus 2>/dev/null || true)"
+        [[ -n "$bus" ]] && export DBUS_SESSION_BUS_ADDRESS="unix:path=$bus"
+    fi
+    notify-send --urgency="$urgency" "$summary" "$body" 2>/dev/null || true
+}
+
 shopt -s nullglob
 for f in "$SRC"/*.{mp4,mov,mkv,webm,avi}; do
     [[ -f "$f" ]] || continue
@@ -36,13 +48,18 @@ for f in "$SRC"/*.{mp4,mov,mkv,webm,avi}; do
     fi
 
     echo "tide-video-convert: converting $name → $out"
-    ffmpeg -i "$f" \
+    if ffmpeg -i "$f" \
         -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" \
         -r 30 \
         -c:v libx264 -crf 18 -preset fast \
         -c:a aac -b:a 192k \
         -movflags +faststart \
         "$out" \
-        && mv "$f" "$ARCHIVE/$name" \
-        || echo "tide-video-convert: failed on $name" >&2
+        && mv "$f" "$ARCHIVE/$name"; then
+        echo "tide-video-convert: done $name"
+        _notify "Wallpaper Converted" "\"$name\" was converted successfully!"
+    else
+        echo "tide-video-convert: failed on $name" >&2
+        _notify "Wallpaper Conversion Failed" "\"$name\" could not be converted — check logs for details." critical
+    fi
 done
