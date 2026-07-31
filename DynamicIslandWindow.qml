@@ -94,12 +94,33 @@ onBubblesEnabledChanged: if (appearanceSettingsLoaded) appearanceSettingsSaveTim
 
 IpcHandler {
         target: "tide"
+
         function toggleSearch(): void {
-            if (islandContainer.islandState === "search") {
+            if (islandContainer.islandState === "search")
                 islandContainer.smartRestoreState()
-            } else {
+            else
                 islandContainer.showSearch()
-            }
+        }
+
+        function toggleControlCenter(): void {
+            if (islandContainer.islandState === "control_center")
+                islandContainer.smartRestoreState()
+            else
+                islandContainer.showControlCenter()
+        }
+
+        function togglePowerMenu(): void {
+            if (islandContainer.islandState === "power_menu")
+                islandContainer.smartRestoreState()
+            else
+                islandContainer.showPowerMenu()
+        }
+
+        function toggleNotificationCenter(): void {
+            if (islandContainer.islandState === "notification_center")
+                islandContainer.smartRestoreState()
+            else
+                islandContainer.showNotificationCenter()
         }
     }
 
