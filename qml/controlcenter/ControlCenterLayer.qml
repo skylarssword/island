@@ -25,6 +25,8 @@ signal bubblesToggleRequested()
     property bool bubblesEnabled: true
     signal idleModeToggleRequested(bool enabled)
     property bool idleMode: false
+    signal sidebarToggleRequested()
+    property bool sidebarEnabled: false
     property bool appearanceMenuOpen: false
     property bool gamemodeCardFlipped: false
     property real capsuleOpacity: 0.20
@@ -3321,6 +3323,81 @@ MouseArea {
                         renderType: Text.NativeRendering
                         width: parent.width
                         text: "Hides the island and moves widgets to the background layer. Everything is visible on empty workspaces and hidden when windows are open."
+                        color: controlCenter.textSecondary
+                        font.pixelSize: 10
+                        font.family: controlCenter.textFontFamily
+                        wrapMode: Text.WordWrap
+                        opacity: 0.7
+                    }
+
+                    // ── Sidebar ───────────────────────────────────────────
+                    Item {
+                        width: parent.width
+                        height: 24
+
+                        Text {
+                            renderType: Text.NativeRendering
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Sidebar"
+                            color: controlCenter.textPrimary
+                            font.pixelSize: 13
+                            font.family: controlCenter.textFontFamily
+                            font.weight: Font.DemiBold
+                        }
+
+                        Row {
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 6
+
+                            Text {
+                                renderType: Text.NativeRendering
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "Show Sidebar"
+                                color: controlCenter.textSecondary
+                                font.pixelSize: 10
+                                font.family: controlCenter.textFontFamily
+                                font.weight: Font.Medium
+                            }
+
+                            Rectangle {
+                                id: sidebarSwitchTrack
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 34
+                                height: 20
+                                radius: 10
+                                color: controlCenter.sidebarEnabled ? StyleTokens.success : StyleTokens.switchOff
+
+                                Behavior on color {
+                                    ColorAnimation { duration: StyleTokens.durationFast }
+                                }
+
+                                Rectangle {
+                                    width: 16
+                                    height: 16
+                                    radius: 8
+                                    y: 2
+                                    x: controlCenter.sidebarEnabled ? 16 : 2
+                                    color: StyleTokens.white
+
+                                    Behavior on x {
+                                        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: controlCenter.sidebarToggleRequested()
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        renderType: Text.NativeRendering
+                        width: parent.width
+                        text: "Shows a slim pill on the left edge of the screen. Future sections like workspaces, media, and clock will live here."
                         color: controlCenter.textSecondary
                         font.pixelSize: 10
                         font.family: controlCenter.textFontFamily

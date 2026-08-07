@@ -187,7 +187,7 @@ implicitHeight: Math.max(
         Math.ceil(4 + root.connectivityDetailHeight + 12),
         Math.ceil(root.controlCenterWindowHeight)
     )
-exclusiveZone: root.idleMode ? 0 : (root.gamemodeActive ? 60 : 35)
+exclusiveZone: root.idleMode ? 0 : ((root.gamemodeActive && root.sidebarEnabled) ? 35 : (root.gamemodeActive ? 60 : 35))
     aboveWindows: true
 focusable: root.overviewVisible || root.connectivityPromptActive || islandContainer.islandState === "info" || islandContainer.islandState === "search" || islandContainer.islandState === "control_center"
 WlrLayershell.layer: root.idleMode ? WlrLayer.Background : (root.pinned ? WlrLayer.Overlay : WlrLayer.Top)
@@ -647,24 +647,25 @@ if (typeof parsed.bubblesEnabled === "boolean")
         id: appearanceSettingsSaveTimer
         interval: 400
         repeat: false
-        onTriggered: appearanceSettingsSaveExec.running = true
+        onTriggered: {
+            appearanceSettingsSaveExec.command = ["bash", "-c",
+                "mkdir -p \"$HOME/.cache/quickshell\" && printf '%s' '" +
+                JSON.stringify({
+                    capsuleOpacity:       root.capsuleOpacity,
+                    capsuleUseWalColor:   root.capsuleUseWalColor,
+                    capsuleWalColorIndex: root.capsuleWalColorIndex,
+                    lyricsExpandedView:   root.lyricsExpandedView,
+                    sidebarEnabled:       root.sidebarEnabled,
+                    bubblesEnabled:       root.bubblesEnabled,
+                    idleMode:             root.idleMode,
+                    gamemodeActive:       root.gamemodeActive
+                }) +
+                "' > \"$HOME/.cache/quickshell/appearance-settings.json\""]
+            appearanceSettingsSaveExec.running = true
+        }
     }
 
-    Process {
-        id: appearanceSettingsSaveExec
-        command: ["bash", "-c",
-            "mkdir -p \"$HOME/.cache/quickshell\" && printf '%s' '" +
-JSON.stringify({
-                capsuleOpacity: root.capsuleOpacity,
-                capsuleUseWalColor: root.capsuleUseWalColor,
-                capsuleWalColorIndex: root.capsuleWalColorIndex,
-lyricsExpandedView: root.lyricsExpandedView,
-                sidebarEnabled: root.sidebarEnabled,
-                bubblesEnabled: root.bubblesEnabled,
-                idleMode: root.idleMode
-            }) +
-            "' > \"$HOME/.cache/quickshell/appearance-settings.json\""]
-    }
+    Process { id: appearanceSettingsSaveExec }
 
     Component.onCompleted: appearanceSettingsLoader.running = true
 
@@ -1890,7 +1891,7 @@ case "capturing":
                 islandContainer.swipeTransitionProgress
             )
 opacity: 1
-visible: !root.idleMode
+visible: !root.idleMode && !root.sidebarEnabled
 color: root.overviewContentVisible
     ? root.overviewCapsuleColor
     : (root.gamemodeActive
@@ -2530,6 +2531,8 @@ bubblesEnabled: root.bubblesEnabled
                         onBubblesToggleRequested: root.bubblesEnabled = !root.bubblesEnabled
 idleMode: root.idleMode
                         onIdleModeToggleRequested: function(enabled) { root.idleMode = enabled }
+sidebarEnabled: root.sidebarEnabled
+                        onSidebarToggleRequested: root.sidebarEnabled = !root.sidebarEnabled
                         showCondition: islandContainer.controlCenterLayerVisible
                         onConnectivityPanelRequested: function(kind, open) {
                             root.setConnectivityDetailVisible(kind, open)
@@ -2677,7 +2680,7 @@ WorkspaceBubble {
             walColor: root.capsuleWalColor
             capsuleOpacityValue: root.capsuleOpacity
             gamemodeActive: root.gamemodeActive
-            opacity: (root.bubblesEnabled && !root.idleMode) ? 1 : 0
+            opacity: (root.bubblesEnabled && !root.idleMode && !root.sidebarEnabled) ? 1 : 0
             visible: opacity > 0.01
             Behavior on opacity { NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeOut } }
             onDotClicked: function(workspaceId) { hyprDispatch.focusWorkspace(workspaceId) }
@@ -2704,7 +2707,7 @@ SystrayBubble {
                 if (islandContainer.islandState === "power_menu") islandContainer.smartRestoreState()
                 else islandContainer.showPowerMenu()
             }
-            opacity: (root.bubblesEnabled && !root.idleMode) ? 1 : 0
+            opacity: (root.bubblesEnabled && !root.idleMode && !root.sidebarEnabled) ? 1 : 0
             visible: opacity > 0.01
             Behavior on opacity { NumberAnimation { duration: IslandMotion.fast; easing.type: IslandMotion.easeOut } }
         }

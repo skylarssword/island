@@ -24,6 +24,10 @@ Item {
     property bool showCondition: false
     property string iconFontFamily: ""
     property string textFontFamily: ""
+    // Set true when embedded in SidebarMusicPopup — disables the album art
+    // page toggle (no art visible there) and adjusts top margin to clear
+    // the ‹ back button that floats above the panel.
+    property bool sidebarMode: false
 
     // ── Page state ───────────────────────────────────────────────────────────
     property bool customPageActive: false
@@ -226,7 +230,10 @@ function selectSlot(slot) {
 
     // ── UI ───────────────────────────────────────────────────────────────────
     anchors.fill: parent
-    anchors.margins: 20
+    anchors.topMargin:    sidebarMode ? 48 : 20
+    anchors.leftMargin:   sidebarMode ? 8  : 20
+    anchors.rightMargin:  sidebarMode ? 8  : 20
+    anchors.bottomMargin: sidebarMode ? 8  : 20
     opacity: showCondition ? 1 : 0
 
     Behavior on opacity {
@@ -236,228 +243,241 @@ function selectSlot(slot) {
     // ═══════════════════════════════════════════════════════════════════════
     // PAGE 1 — original equalizer (Flat / Bass / Treble / ...)
     // ═══════════════════════════════════════════════════════════════════════
-    Row {
+    Column {
         id: page1
         anchors.fill: parent
-        spacing: 20
+        spacing: 12
         visible: !root.customPageActive
 
-        // ── Left: large album art (tap to switch pages) ─────────────────────
+        // ── Sliders row — full width in sidebar, art+sliders in main island ──
         Item {
-            width: parent.height
-            height: parent.height
+            width: parent.width
+            height: parent.height - bottomRow.height - parent.spacing
 
-Image {
-    id: eqArtImage
-    anchors.fill: parent
-    source: root._artUrl
-    fillMode: Image.PreserveAspectCrop
-
-    smooth: true
-    mipmap: true
-    cache: true
-
-    visible: false
-}
-
-            Rectangle {
-                id: eqArtMask
-                anchors.fill: parent
-                radius: 22
-                visible: false
-            }
-
-            OpacityMask {
-                anchors.fill: parent
-                source: eqArtImage
-                maskSource: eqArtMask
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                radius: 22
-                color: "transparent"
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.08)
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.customPageActive = true
-            }
-        }
-
-        // ── Right: sliders fill available space, presets pinned to bottom ──
-        Column {
-            width: parent.width - parent.height - parent.spacing
-            height: parent.height
-            spacing: 12
-
+            // Album art (main island only — tap to switch to custom page)
             Item {
-                width: parent.width
-                height: parent.height - bottomRow.height - parent.spacing
+                id: artColumn
+                visible: !root.sidebarMode
+                width:  visible ? parent.height : 0
+                height: parent.height
 
-                Row {
+                Image {
+                    id: eqArtImage
                     anchors.fill: parent
-                    spacing: 4
+                    source: root._artUrl
+                    fillMode: Image.PreserveAspectCrop
+                    smooth: true; mipmap: true; cache: true
+                    visible: false
+                }
+                Rectangle {
+                    id: eqArtMask
+                    anchors.fill: parent
+                    radius: 22; visible: false
+                }
+                OpacityMask {
+                    anchors.fill: parent
+                    source: eqArtImage
+                    maskSource: eqArtMask
+                }
+                Rectangle {
+                    anchors.fill: parent; radius: 22
+                    color: "transparent"
+                    border.width: 1; border.color: Qt.rgba(1,1,1,0.08)
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.customPageActive = true
+                }
+            }
 
-                    Repeater {
-                        model: 10
-                        delegate: Item {
-                            width: (parent.width - 9 * 4) / 10
-                            height: parent.height
+            Row {
+                anchors.left:   artColumn.visible ? artColumn.right : parent.left
+                anchors.leftMargin: artColumn.visible ? 20 : 0
+                anchors.right:  parent.right
+                anchors.top:    parent.top
+                anchors.bottom: parent.bottom
+                spacing: 4
 
-                            readonly property real bandGain: root.bandValues[index] !== undefined ? root.bandValues[index] : 0
-                            readonly property string bandLabel: ["31","63","125","250","500","1k","2k","4k","8k","16k"][index]
+                Repeater {
+                    model: 10
+                    delegate: Item {
+                        width: (parent.width - 9 * 4) / 10
+                        height: parent.height
 
-                            Column {
-                                anchors.fill: parent
-                                spacing: 4
+                        readonly property real bandGain: root.bandValues[index] !== undefined ? root.bandValues[index] : 0
+                        readonly property string bandLabel: ["31","63","125","250","500","1k","2k","4k","8k","16k"][index]
 
-                                Item {
-                                    width: parent.width
-                                    height: parent.height - bandLabelText.height - 4
+                        Column {
+                            anchors.fill: parent
+                            spacing: 4
+
+                            Item {
+                                width: parent.width
+                                height: parent.height - bandLabelText.height - 4
+
+                                Rectangle {
+                                    id: bandTrack
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: 6
+                                    height: parent.height
+                                    radius: 3
+                                    color: Qt.rgba(1, 1, 1, 0.08)
 
                                     Rectangle {
-                                        id: bandTrack
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        width: 6
-                                        height: parent.height
-                                        radius: 3
-                                        color: Qt.rgba(1, 1, 1, 0.08)
-
-                                        Rectangle {
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            width: 10
-                                            height: 1
-                                            color: Qt.rgba(1, 1, 1, 0.2)
-                                        }
-
-                                        Rectangle {
-                                            readonly property real norm: Math.max(-12, Math.min(12, bandGain)) / 12
-                                            width: parent.width
-                                            radius: 3
-                                            color: norm >= 0 ? "#5e9eff" : "#ff6b6b"
-                                            y: norm >= 0
-                                               ? parent.height / 2 - (parent.height / 2) * norm
-                                               : parent.height / 2
-                                            height: (parent.height / 2) * Math.abs(norm)
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: bandDrag
-                                        anchors.fill: parent
-                                        anchors.margins: -8
-                                        preventStealing: true
-
-                                        function valueFromY(y) {
-                                            const h = bandTrack.height
-                                            const clampedY = Math.max(0, Math.min(h, y))
-                                            const norm = 1 - (clampedY / h) * 2
-                                            return Math.max(-12, Math.min(12, norm * 12))
-                                        }
-
-                                        onPressed: (mouse) => {
-                                            mouse.accepted = true
-                                            const localY = mapToItem(bandTrack, mouse.x, mouse.y).y
-                                            root.setBand(index + 1, valueFromY(localY))
-                                        }
-                                        onPositionChanged: (mouse) => {
-                                            if (!pressed) return
-                                            const localY = mapToItem(bandTrack, mouse.x, mouse.y).y
-                                            root.setBand(index + 1, valueFromY(localY))
-                                        }
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 10; height: 1
+                                        color: Qt.rgba(1, 1, 1, 0.2)
                                     }
 
                                     Rectangle {
                                         readonly property real norm: Math.max(-12, Math.min(12, bandGain)) / 12
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        width: 14
-                                        height: 14
-                                        radius: 7
-                                        color: "white"
-                                        y: (parent.height / 2) - (parent.height / 2) * norm - height / 2
-                                        Behavior on y {
-                                            enabled: !bandDrag.pressed
-                                            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
-                                        }
+                                        width: parent.width; radius: 3
+                                        color: norm >= 0 ? "#5e9eff" : "#ff6b6b"
+                                        y: norm >= 0
+                                           ? parent.height / 2 - (parent.height / 2) * norm
+                                           : parent.height / 2
+                                        height: (parent.height / 2) * Math.abs(norm)
                                     }
                                 }
 
-                                Text {
-                                    renderType: Text.NativeRendering
-                                    id: bandLabelText
-                                    width: parent.width
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: bandLabel
-                                    color: IslandMotion.textSecondary
-                                    font.pixelSize: 9
-                                    font.family: textFontFamily
-                                    font.weight: Font.Medium
+                                MouseArea {
+                                    id: bandDrag
+                                    anchors.fill: parent
+                                    anchors.margins: -8
+                                    preventStealing: true
+                                    function valueFromY(y) {
+                                        const h = bandTrack.height
+                                        const clampedY = Math.max(0, Math.min(h, y))
+                                        const norm = 1 - (clampedY / h) * 2
+                                        return Math.max(-12, Math.min(12, norm * 12))
+                                    }
+                                    onPressed: (mouse) => {
+                                        mouse.accepted = true
+                                        const localY = mapToItem(bandTrack, mouse.x, mouse.y).y
+                                        root.setBand(index + 1, valueFromY(localY))
+                                    }
+                                    onPositionChanged: (mouse) => {
+                                        if (!pressed) return
+                                        const localY = mapToItem(bandTrack, mouse.x, mouse.y).y
+                                        root.setBand(index + 1, valueFromY(localY))
+                                    }
                                 }
+
+                                Rectangle {
+                                    readonly property real norm: Math.max(-12, Math.min(12, bandGain)) / 12
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: 14; height: 14; radius: 7
+                                    color: "white"
+                                    y: (parent.height / 2) - (parent.height / 2) * norm - height / 2
+                                    Behavior on y {
+                                        enabled: !bandDrag.pressed
+                                        NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                renderType: Text.NativeRendering
+                                id: bandLabelText
+                                width: parent.width
+                                horizontalAlignment: Text.AlignHCenter
+                                text: bandLabel
+                                color: IslandMotion.textSecondary
+                                font.pixelSize: 9
+                                font.family: textFontFamily
+                                font.weight: Font.Medium
                             }
                         }
                     }
                 }
             }
+        }
 
-            Item {
-                id: bottomRow
-                width: parent.width
-                height: 28
+        Item {
+            id: bottomRow
+            width: parent.width
+            height: 28
 
-                Row {
-                    id: presetRow
-                    anchors.left: parent.left
-                    anchors.right: applyButton.left
-                    anchors.rightMargin: 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: parent.height
-                    spacing: 6
-                    clip: true
+            // Draggable scrolling preset list
+            ListView {
+                id: presetListView
+                anchors.left: parent.left
+                anchors.right: rightButtons.left
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height
+                orientation: ListView.Horizontal
+                spacing: 6
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                model: root.presetNames
 
-                    Repeater {
-                        model: root.presetNames
-                        delegate: Rectangle {
-                            readonly property bool isActive: root.currentPreset === modelData
-                            width: presetText.implicitWidth + 14
-                            height: parent.height
-                            radius: height / 2
-                            color: isActive ? "#5e9eff" : Qt.rgba(1, 1, 1, 0.08)
+                delegate: Rectangle {
+                    required property string modelData
+                    readonly property bool isActive: root.currentPreset === modelData
+                    width: presetText.implicitWidth + 14
+                    height: presetListView.height
+                    radius: height / 2
+                    color: isActive ? "#5e9eff" : Qt.rgba(1, 1, 1, 0.08)
+                    Behavior on color { ColorAnimation { duration: 150 } }
 
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                    Text {
+                        renderType: Text.NativeRendering
+                        id: presetText
+                        anchors.centerIn: parent
+                        text: modelData
+                        color: isActive ? IslandMotion.textPrimary : IslandMotion.textSecondary
+                        font.pixelSize: 10
+                        font.family: textFontFamily
+                        font.weight: Font.DemiBold
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: root.applyPreset(modelData)
+                    }
+                }
+            }
 
-                            Text {
-                                renderType: Text.NativeRendering
-                                id: presetText
-                                anchors.centerIn: parent
-                                text: modelData
-                                color: isActive ? IslandMotion.textPrimary : IslandMotion.textSecondary
-                                font.pixelSize: 10
-                                font.family: textFontFamily
-                                font.weight: Font.DemiBold
-                            }
+            Row {
+                id: rightButtons
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height
+                spacing: 6
 
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: root.applyPreset(modelData)
-                            }
-                        }
+                // Custom slots button
+                Rectangle {
+                    width: 58; height: parent.height; radius: height / 2
+                    color: customPageBtnMouse.containsMouse ? Qt.rgba(1,1,1,0.18) : Qt.rgba(1,1,1,0.08)
+                    border.width: 1
+                    border.color: Qt.rgba(1,1,1,0.18)
+                    Behavior on color { ColorAnimation { duration: 120 } }
+
+                    Text {
+                        renderType: Text.NativeRendering
+                        anchors.centerIn: parent
+                        text: "Custom"
+                        color: IslandMotion.textSecondary
+                        font.pixelSize: 10
+                        font.family: textFontFamily
+                        font.weight: Font.DemiBold
+                    }
+                    MouseArea {
+                        id: customPageBtnMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.customPageActive = true
                     }
                 }
 
+                // Apply button
                 Rectangle {
                     id: applyButton
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 64
-                    height: parent.height
-                    radius: height / 2
+                    width: 58; height: parent.height; radius: height / 2
                     color: root.pendingChanges ? "#5e9eff" : Qt.rgba(1, 1, 1, 0.06)
-
                     Behavior on color { ColorAnimation { duration: 200 } }
 
                     Text {
@@ -465,11 +485,10 @@ Image {
                         anchors.centerIn: parent
                         text: root.pendingChanges ? "Apply" : "Saved"
                         color: root.pendingChanges ? IslandMotion.textPrimary : IslandMotion.textSecondary
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         font.family: textFontFamily
                         font.weight: Font.DemiBold
                     }
-
                     MouseArea {
                         anchors.fill: parent
                         enabled: root.pendingChanges
@@ -482,278 +501,241 @@ Image {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // PAGE 2 — custom numbered slots
+    // PAGE 2 — custom numbered slots, full width sliders
     // ═══════════════════════════════════════════════════════════════════════
-    Row {
+    Column {
         id: page2
         anchors.fill: parent
-        spacing: 20
+        spacing: 12
         visible: root.customPageActive
 
-        // ── Left: same album art, tap to switch back ────────────────────────
         Item {
-            width: parent.height
-            height: parent.height
+            width: parent.width
+            height: parent.height - bottomRow2.height - parent.spacing
 
-            Image {
-                id: eqArtImage2
+            Row {
                 anchors.fill: parent
-                source: root._artUrl
-                fillMode: Image.PreserveAspectCrop
-                visible: false
-            }
+                spacing: 4
 
-            Rectangle {
-                id: eqArtMask2
-                anchors.fill: parent
-                radius: 22
-                visible: false
-            }
+                Repeater {
+                    model: 10
+                    delegate: Item {
+                        width: (parent.width - 9 * 4) / 10
+                        height: parent.height
 
-            OpacityMask {
-                anchors.fill: parent
-                source: eqArtImage2
-                maskSource: eqArtMask2
-            }
+                        readonly property real bandGain: root.customBandValues[index] !== undefined ? root.customBandValues[index] : 0
+                        readonly property string bandLabel: ["31","63","125","250","500","1k","2k","4k","8k","16k"][index]
 
-            Rectangle {
-                anchors.fill: parent
-                radius: 22
-                color: "transparent"
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.08)
-            }
+                        Column {
+                            anchors.fill: parent
+                            spacing: 4
 
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.customPageActive = false
-            }
-        }
+                            Item {
+                                width: parent.width
+                                height: parent.height - bandLabelText2.height - 4
 
-        // ── Right: sliders for the selected custom slot, numbered row at bottom ──
-        Column {
-            width: parent.width - parent.height - parent.spacing
-            height: parent.height
-            spacing: 12
-
-            Item {
-                width: parent.width
-                height: parent.height - bottomRow2.height - parent.spacing
-
-                Row {
-                    anchors.fill: parent
-                    spacing: 4
-
-                    Repeater {
-                        model: 10
-                        delegate: Item {
-                            width: (parent.width - 9 * 4) / 10
-                            height: parent.height
-
-                            readonly property real bandGain: root.customBandValues[index] !== undefined ? root.customBandValues[index] : 0
-                            readonly property string bandLabel: ["31","63","125","250","500","1k","2k","4k","8k","16k"][index]
-
-                            Column {
-                                anchors.fill: parent
-                                spacing: 4
-
-                                Item {
-                                    width: parent.width
-                                    height: parent.height - bandLabelText2.height - 4
+                                Rectangle {
+                                    id: bandTrack2
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: 6; height: parent.height; radius: 3
+                                    color: Qt.rgba(1, 1, 1, 0.08)
 
                                     Rectangle {
-                                        id: bandTrack2
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        width: 6
-                                        height: parent.height
-                                        radius: 3
-                                        color: Qt.rgba(1, 1, 1, 0.08)
-
-                                        Rectangle {
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            width: 10
-                                            height: 1
-                                            color: Qt.rgba(1, 1, 1, 0.2)
-                                        }
-
-                                        Rectangle {
-                                            readonly property real norm: Math.max(-12, Math.min(12, bandGain)) / 12
-                                            width: parent.width
-                                            radius: 3
-                                            color: norm >= 0 ? "#5e9eff" : "#ff6b6b"
-                                            y: norm >= 0
-                                               ? parent.height / 2 - (parent.height / 2) * norm
-                                               : parent.height / 2
-                                            height: (parent.height / 2) * Math.abs(norm)
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: bandDrag2
-                                        anchors.fill: parent
-                                        anchors.margins: -8
-                                        preventStealing: true
-
-                                        function valueFromY(y) {
-                                            const h = bandTrack2.height
-                                            const clampedY = Math.max(0, Math.min(h, y))
-                                            const norm = 1 - (clampedY / h) * 2
-                                            return Math.max(-12, Math.min(12, norm * 12))
-                                        }
-
-                                        onPressed: (mouse) => {
-                                            mouse.accepted = true
-                                            const localY = mapToItem(bandTrack2, mouse.x, mouse.y).y
-                                            root.setCustomBand(index + 1, valueFromY(localY))
-                                        }
-                                        onPositionChanged: (mouse) => {
-                                            if (!pressed) return
-                                            const localY = mapToItem(bandTrack2, mouse.x, mouse.y).y
-                                            root.setCustomBand(index + 1, valueFromY(localY))
-                                        }
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 10; height: 1
+                                        color: Qt.rgba(1, 1, 1, 0.2)
                                     }
 
                                     Rectangle {
                                         readonly property real norm: Math.max(-12, Math.min(12, bandGain)) / 12
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        width: 14
-                                        height: 14
-                                        radius: 7
-                                        color: "white"
-                                        y: (parent.height / 2) - (parent.height / 2) * norm - height / 2
-                                        Behavior on y {
-                                            enabled: !bandDrag2.pressed
-                                            NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
-                                        }
+                                        width: parent.width; radius: 3
+                                        color: norm >= 0 ? "#5e9eff" : "#ff6b6b"
+                                        y: norm >= 0
+                                           ? parent.height / 2 - (parent.height / 2) * norm
+                                           : parent.height / 2
+                                        height: (parent.height / 2) * Math.abs(norm)
                                     }
                                 }
 
-                                Text {
-                                    renderType: Text.NativeRendering
-                                    id: bandLabelText2
-                                    width: parent.width
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: bandLabel
-                                    color: IslandMotion.textSecondary
-                                    font.pixelSize: 9
-                                    font.family: textFontFamily
-                                    font.weight: Font.Medium
+                                MouseArea {
+                                    id: bandDrag2
+                                    anchors.fill: parent
+                                    anchors.margins: -8
+                                    preventStealing: true
+                                    function valueFromY(y) {
+                                        const h = bandTrack2.height
+                                        const clampedY = Math.max(0, Math.min(h, y))
+                                        const norm = 1 - (clampedY / h) * 2
+                                        return Math.max(-12, Math.min(12, norm * 12))
+                                    }
+                                    onPressed: (mouse) => {
+                                        mouse.accepted = true
+                                        const localY = mapToItem(bandTrack2, mouse.x, mouse.y).y
+                                        root.setCustomBand(index + 1, valueFromY(localY))
+                                    }
+                                    onPositionChanged: (mouse) => {
+                                        if (!pressed) return
+                                        const localY = mapToItem(bandTrack2, mouse.x, mouse.y).y
+                                        root.setCustomBand(index + 1, valueFromY(localY))
+                                    }
                                 }
+
+                                Rectangle {
+                                    readonly property real norm: Math.max(-12, Math.min(12, bandGain)) / 12
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: 14; height: 14; radius: 7
+                                    color: "white"
+                                    y: (parent.height / 2) - (parent.height / 2) * norm - height / 2
+                                    Behavior on y {
+                                        enabled: !bandDrag2.pressed
+                                        NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                renderType: Text.NativeRendering
+                                id: bandLabelText2
+                                width: parent.width
+                                horizontalAlignment: Text.AlignHCenter
+                                text: bandLabel
+                                color: IslandMotion.textSecondary
+                                font.pixelSize: 9
+                                font.family: textFontFamily
+                                font.weight: Font.Medium
                             }
                         }
                     }
                 }
             }
 
-            // Bottom row — numbered slots on the left, Reset + Save on the right
-            Item {
-                id: bottomRow2
-                width: parent.width
-                height: 28
+            // Bottom row — ‹ Presets on left, slots in middle, Reset+Save on right
+        }
 
-                Row {
-                    id: slotRow
-                    anchors.left: parent.left
-                    anchors.right: actionButtons.left
-                    anchors.rightMargin: 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: parent.height
-                    spacing: 6
-                    clip: true
+        Item {
+            id: bottomRow2
+            width: parent.width
+            height: 28
 
-                    Repeater {
-                        model: 10
-                        delegate: Rectangle {
-                            readonly property int slotNum: index + 1
-                            readonly property bool isFilled: !!root.customSlotsFilled[String(slotNum)]
-                            readonly property bool isSelected: root.selectedSlot === slotNum
-                            width: 24
-                            height: parent.height
-                            radius: height / 2
-                            color: isSelected
-                                ? "#5e9eff"
-                                : (isFilled ? Qt.rgba(0.36, 0.62, 1.0, 0.35) : Qt.rgba(1, 1, 1, 0.08))
+            // ‹ Presets back button
+            Rectangle {
+                id: backToPresetsBtn
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: presetsBtnText.implicitWidth + 20
+                height: parent.height; radius: height / 2
+                color: presetsBtnMouse.containsMouse ? Qt.rgba(1,1,1,0.15) : Qt.rgba(1,1,1,0.08)
+                border.width: 1; border.color: Qt.rgba(1,1,1,0.18)
+                Behavior on color { ColorAnimation { duration: 120 } }
 
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                Text {
+                    id: presetsBtnText
+                    renderType: Text.NativeRendering
+                    anchors.centerIn: parent
+                    text: "‹ Presets"
+                    color: IslandMotion.textSecondary
+                    font.pixelSize: 10
+                    font.family: textFontFamily
+                    font.weight: Font.DemiBold
+                }
+                MouseArea {
+                    id: presetsBtnMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.customPageActive = false
+                }
+            }
 
-                            Text {
-                                renderType: Text.NativeRendering
-                                anchors.centerIn: parent
-                                text: String(slotNum)
-                                color: isSelected ? IslandMotion.textPrimary : IslandMotion.textSecondary
-                                font.pixelSize: 10
-                                font.family: textFontFamily
-                                font.weight: Font.DemiBold
-                            }
+            // Numbered slot pills — centered between back button and action buttons
+            Row {
+                id: slotRow
+                anchors.left: backToPresetsBtn.right
+                anchors.right: actionButtons.left
+                anchors.leftMargin: 8
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height
+                spacing: 5
+                clip: true
 
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: root.selectSlot(slotNum)
-                            }
+                Repeater {
+                    model: 10
+                    delegate: Rectangle {
+                        readonly property int slotNum: index + 1
+                        readonly property bool isFilled: !!root.customSlotsFilled[String(slotNum)]
+                        readonly property bool isSelected: root.selectedSlot === slotNum
+                        width: 22; height: parent.height; radius: height / 2
+                        color: isSelected
+                            ? "#5e9eff"
+                            : (isFilled ? Qt.rgba(0.36, 0.62, 1.0, 0.35) : Qt.rgba(1, 1, 1, 0.08))
+                        Behavior on color { ColorAnimation { duration: 150 } }
+
+                        Text {
+                            renderType: Text.NativeRendering
+                            anchors.centerIn: parent
+                            text: String(slotNum)
+                            color: isSelected ? IslandMotion.textPrimary : IslandMotion.textSecondary
+                            font.pixelSize: 10
+                            font.family: textFontFamily
+                            font.weight: Font.DemiBold
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.selectSlot(slotNum)
                         }
                     }
                 }
+            }
 
-                Row {
-                    id: actionButtons
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: parent.height
-                    spacing: 6
+            Row {
+                id: actionButtons
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height
+                spacing: 6
 
-                    Rectangle {
-                        width: 54
-                        height: parent.height
-                        radius: height / 2
-                        color: resetMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
+                Rectangle {
+                    width: 50; height: parent.height; radius: height / 2
+                    color: resetMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.06)
+                    Behavior on color { ColorAnimation { duration: 120 } }
 
-                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                        Text {
-                            renderType: Text.NativeRendering
-                            anchors.centerIn: parent
-                            text: "Reset"
-                            color: IslandMotion.textSecondary
-                            font.pixelSize: 10
-                            font.family: textFontFamily
-                            font.weight: Font.DemiBold
-                        }
-
-                        MouseArea {
-                            id: resetMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.resetSelectedSlot()
-                        }
+                    Text {
+                        renderType: Text.NativeRendering
+                        anchors.centerIn: parent
+                        text: "Reset"
+                        color: IslandMotion.textSecondary
+                        font.pixelSize: 10
+                        font.family: textFontFamily
+                        font.weight: Font.DemiBold
                     }
+                    MouseArea {
+                        id: resetMouse; anchors.fill: parent
+                        hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: root.resetSelectedSlot()
+                    }
+                }
 
-                    Rectangle {
-                        width: 54
-                        height: parent.height
-                        radius: height / 2
-                        color: root.customSlotDirty ? "#5e9eff" : Qt.rgba(1, 1, 1, 0.06)
+                Rectangle {
+                    width: 50; height: parent.height; radius: height / 2
+                    color: root.customSlotDirty ? "#5e9eff" : Qt.rgba(1, 1, 1, 0.06)
+                    Behavior on color { ColorAnimation { duration: 200 } }
 
-                        Behavior on color { ColorAnimation { duration: 200 } }
-
-                        Text {
-                            renderType: Text.NativeRendering
-                            anchors.centerIn: parent
-                            text: root.customSlotDirty ? "Save" : "Saved"
-                            color: root.customSlotDirty ? IslandMotion.textPrimary : IslandMotion.textSecondary
-                            font.pixelSize: 10
-                            font.family: textFontFamily
-                            font.weight: Font.DemiBold
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: root.customSlotDirty
-                            cursorShape: root.customSlotDirty ? Qt.PointingHandCursor : Qt.ArrowCursor
-                            onClicked: root.saveSelectedSlot()
-                        }
+                    Text {
+                        renderType: Text.NativeRendering
+                        anchors.centerIn: parent
+                        text: root.customSlotDirty ? "Save" : "Saved"
+                        color: root.customSlotDirty ? IslandMotion.textPrimary : IslandMotion.textSecondary
+                        font.pixelSize: 10
+                        font.family: textFontFamily
+                        font.weight: Font.DemiBold
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: root.customSlotDirty
+                        cursorShape: root.customSlotDirty ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: root.saveSelectedSlot()
                     }
                 }
             }

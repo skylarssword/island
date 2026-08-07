@@ -5,6 +5,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import IslandBackend
 import "qml/shared"
+import "qml/sidebar"
 
 Scope {
     id: shellRoot
@@ -34,6 +35,13 @@ Scope {
             if (window && window.showNotification)
                 window.showNotification(appName, summary, body);
         });
+        // Also route to sidebar windows
+        const sidebarWindows = sidebarVariants.instances ? sidebarVariants.instances : [];
+        for (let i = 0; i < sidebarWindows.length; i++) {
+            const sw = sidebarWindows[i];
+            if (sw && sw.showNotification)
+                sw.showNotification(appName, summary, body);
+        }
     }
 
     function anyOverviewOpen() {
@@ -159,6 +167,17 @@ Scope {
             required property var modelData
             screen: modelData
             shellRootController: shellRoot
+        }
+    }
+
+    // ── Sidebar pill — one per screen, self-contained polling inside
+    // SidebarWindow.qml keeps this block clean. ──────────────────────
+    Variants {
+        id: sidebarVariants
+        model: Quickshell.screens
+        SidebarWindow {
+            required property var modelData
+            screen: modelData
         }
     }
 
